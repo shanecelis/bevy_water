@@ -25,7 +25,7 @@ fn main() {
     // Wireframe
     .add_plugins(WireframePlugin)
     .add_systems(Startup, setup)
-    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::R)));
+    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::KeyR)));
 
   #[cfg(feature = "atmosphere")]
   app.add_plugins(SpectatorPlugin); // Simple movement for this example
@@ -58,15 +58,15 @@ fn setup(
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardWaterMaterial>>,
 ) {
-  // Mesh for water.
-  let mesh: Handle<Mesh> = meshes.add(
+  let mesh: Mesh =
     shape::UVSphere {
       radius: RADIUS,
       sectors: 48,
       stacks: 36,
     }
-    .into(),
-  );
+    .into();
+  // Mesh for water.
+  let mesh: Handle<Mesh> = meshes.add(mesh);
   // Water material.
   let material = materials.add(StandardWaterMaterial {
     base: default(),

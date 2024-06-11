@@ -32,7 +32,7 @@ fn main() {
     // Wireframe
     .add_plugins(WireframePlugin)
     .add_systems(Startup, setup)
-    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::R)));
+    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::KeyR)));
 
   app.run();
 }
@@ -63,14 +63,14 @@ fn setup(
   mut water_materials: ResMut<Assets<StandardWaterMaterial>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-  // Mesh for water.
-  let mesh: Handle<Mesh> = meshes.add(
-    shape::Icosphere {
+
+   let mesh: Mesh = shape::Icosphere {
       radius: RADIUS,
       subdivisions: 15,
     }
-    .try_into().expect("Icosphere"),
-  );
+    .try_into().expect("Icosphere");
+  // Mesh for water.
+  let mesh: Handle<Mesh> = meshes.add(mesh);
   // Water material.
   let material = water_materials.add(StandardWaterMaterial {
     base: default(),
@@ -95,14 +95,13 @@ fn setup(
       NotShadowCaster,
     ));
 
-  // Mesh for terrain.
-  let mesh: Handle<Mesh> = meshes.add(
-    shape::Icosphere {
+  let mesh: Mesh = shape::Icosphere {
       radius: RADIUS - 0.8,
       subdivisions: 15,
     }
-    .try_into().expect("Icosphere"),
-  );
+    .try_into().expect("Icosphere");
+  // Mesh for terrain.
+  let mesh: Handle<Mesh> = meshes.add(mesh);
   // Terrain material.
   let material = materials.add(StandardMaterial {
     base_color: Color::OLIVE,
