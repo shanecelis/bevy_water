@@ -6,6 +6,7 @@ use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::{input::common_conditions, prelude::*};
 use bevy::render::render_resource::{TextureDescriptor, TextureFormat, TextureDimension, TextureUsages, Extent3d};
 
+use bevy::pbr::{ExtendedMaterial, MaterialExtension};
 #[cfg(feature = "atmosphere")]
 use bevy_spectator::*;
 
@@ -88,7 +89,7 @@ fn setup(
   settings: Res<WaterSettings>,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardWaterMaterial>>,
-  mut caustics_materials: ResMut<Assets<CausticsMaterial>>,
+  mut caustics_materials: ResMut<Assets<CausticsWaterMaterial>>,
 ) {
   // Mesh for water.
   let mesh: Handle<Mesh> = meshes.add(
@@ -96,14 +97,15 @@ fn setup(
       size: CUBE_SIZE,
     }
   );
-  // Water material.
-  let material = materials.add(StandardWaterMaterial {
-    base: default(),
-    extension: WaterMaterial {
+  let water_material = WaterMaterial {
       amplitude: settings.amplitude,
       coord_scale: Vec2::new(256.0, 256.0),
       ..default()
-    },
+    };
+  // Water material.
+  let material = materials.add(StandardWaterMaterial {
+    base: default(),
+    extension: water_material.clone(),
   });
 
   commands
@@ -128,9 +130,12 @@ fn setup(
       Name::new("Water world".to_string()),
       MaterialMeshBundle {
         mesh,
-      material: caustics_materials.add(CausticsMaterial {
+      material: caustics_materials.add(ExtendedMaterial {
+        base: CausticsMaterial {
           plane: Vec4::Y,
-          light: -Vec4::Y,
+          light: Vec4::new(4.0, CUBE_SIZE + 8.0, 4.0, 0.0),
+      },
+        extension: WaterBindMaterial(water_material)
       }),
         transform: Transform::from_xyz(0.0, 0.0, 0.0)
               .with_rotation(Quat::from_rotation_x(0.2)),
