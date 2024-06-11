@@ -10,7 +10,7 @@ struct CausticsMaterial {
 @group(2) @binding(0) var<uniform> material: CausticsMaterial;
 
 struct Vertex {
-    // @builtin(instance_index) instance_index: u32,
+    @builtin(instance_index) instance_index: u32,
     @location(0) position: vec3<f32>,
     // @location(1) blend_color: vec4<f32>,
     @location(2) uv: vec2<f32>,
@@ -24,7 +24,7 @@ struct VertexOutput {
 
 fn line_plane_intercept(line_pos: vec3<f32>, line_normal: vec3<f32>, plane: vec4<f32>) -> vec3<f32> {
     // Unoptimized
-    let distance: f32 = (plane.w - dot(plane.xyz, line_pos)) / dot(line_normal, planeN);
+    let distance: f32 = (plane.w - dot(plane.xyz, line_pos)) / dot(line_normal, plane.xyz);
 
     // Optimized (assumes planeN always points up)
     // let distance: f32 = (planeD - line_pos.y) / line_normal.y;
@@ -38,14 +38,16 @@ const IOR_WATER: f32 = 1.333;
 fn project(origin: vec3<f32>, ray: vec3<f32>, refractedLight: vec3<f32>, plane: vec4<f32>) -> vec3<f32> {
     // This is close to the above.  But the cube has some different aspects when
     // the ray intersects with the side of the cube.  It has a softer patch.
-    origin = line_plane_intercept(origin, ray, plane.xyz, -_MaxDepth);
-    // origin is now where the ray intersects the plane on the water surface.
-    let tplane: f32 = (-1.0 - origin.y) / refractedLight.y;
+    // plane.w = -_MaxDepth;
+    let o = line_plane_intercept(origin, ray, plane);
+    // o is now where the ray intersects the plane on the water surface.
+    // let tplane: f32 = (-1.0 - o.y) / refractedLight.y;
     // tplane is the distance to the XZ plane situated at (0, -1, 0).
-    let proj: vec3<f32> = origin + refractedLight * tplane;
+    // var proj: vec3<f32> = o + refractedLight * tplane;
     // proj is the intersection of the refractedLight onto the XZ plane at (0, -1, 0).
     // The following preserves the behavior entirely.
-    proj = line_plane_intercept(origin, refractedLight, plane.xyz, -1.0);
+    // plane.w = -1.0;
+    let proj = line_plane_intercept(o, refractedLight, plane);
     // let distance: f32 = (planeD - dot(planeN, lineP)) / dot(lineN, planeN);
     // return origin + refractedLight * tplane;
     return proj;
@@ -54,12 +56,8 @@ fn project(origin: vec3<f32>, ray: vec3<f32>, refractedLight: vec3<f32>, plane: 
 @vertex
 fn vertex(vertex: Vertex) -> VertexOutput {
     var out: VertexOutput;
-    out.clip_position = mesh_position_local_to_clip(
-        get_world_from_local(vertex.instance_index),
-        vec4<f32>(vertex.position, 1.0),
-    );
+
     let w_pos = water_fn::uv_to_coord(vertex.uv);
-    let height = water_fn::get_wave_height(w_pos);
 
     // Calculate normal.
     let delta = 0.2;
@@ -69,10 +67,11 @@ fn vertex(vertex: Vertex) -> VertexOutput {
     let normal = vec3<f32>(height - height_dx, delta, height - height_dz);
 
 
-    let refracted_light = refract(-material.light, material.plane.xyz, IOR_AIR / IOR_WATER);
-    let ray = refract(-material.light, normal, IOR_AIR / IOR_WATER);
-    out.old_pos = project(vertex.uv, refracted_light, refracted_light);
-    out.new_pos = project(vertex.uv, ray, refracted_light);
+    let refracted_light = refract(-material.light.xyz, material.plane.xyz, IOR_AIR / IOR_WATER);
+    let ray = refract(-material.light.xyz, normal, IOR_AIR / IOR_WATER);
+    let uv_pos = vec3<f32>(vertex.uv.x, 0.5, vertex.uv.y) * 2.0 - 1.0;
+    out.old_pos = project(uv_pos, refracted_light, refracted_light, material.plane);
+    out.new_pos = project(uv_pos, ray, refracted_light, material.plane);
     out.clip_position = vec4<f32>(out.new_pos.xz + refracted_light.xz / refracted_light.y, 0.0, 1.0);
     // out.vertex.y *= -1;
 
@@ -82,7 +81,6 @@ fn vertex(vertex: Vertex) -> VertexOutput {
     //     vec4<f32>(vertex.position, 1.0),
     // );
 
-    out.blend_color = vertex.blend_color;
     return out;
 }
 

@@ -6,7 +6,7 @@ pub struct CausticsPlugin;
 
 impl Plugin for CausticsPlugin {
     fn build(&self, app: &mut App) {
-        embedded_asset!(app, "caustics.wgsl");
+        embedded_asset!(app, "water", "caustics.wgsl");
         app.add_plugins(MaterialPlugin::<CausticsMaterial>::default());
     }
 }
