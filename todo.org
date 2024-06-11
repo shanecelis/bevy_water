@@ -1,4 +1,6 @@
 #+title: Todo
 * Use math instead of shapes
 Plane subdivisions is a big deal.
-* Render caustics
+* [X] Render caustics to texture
+* [ ] Change cube_caustics to have two planes
+* [ ] Add caustics shader for ground plane
