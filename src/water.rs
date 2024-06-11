@@ -2,6 +2,7 @@ use bevy::pbr::NotShadowCaster;
 use bevy::prelude::*;
 
 pub mod material;
+pub mod caustics;
 use material::*;
 
 pub const WATER_SIZE: u32 = 256;

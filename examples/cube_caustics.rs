@@ -1,0 +1,171 @@
+#[cfg(feature = "depth_prepass")]
+use bevy::core_pipeline::prepass::DepthPrepass;
+
+use bevy::pbr::NotShadowCaster;
+use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
+use bevy::{input::common_conditions, prelude::*};
+use bevy::render::render_resource::{TextureDescriptor, TextureFormat, TextureDimension, TextureUsages, Extent3d};
+
+#[cfg(feature = "atmosphere")]
+use bevy_spectator::*;
+
+use bevy_water::material::{WaterMaterial, StandardWaterMaterial};
+use bevy_water::*;
+use bevy_water::caustics::*;
+
+const CUBE_SIZE: f32 = 10.0;
+
+fn main() {
+  let mut app = App::new();
+
+  app.add_plugins(DefaultPlugins)
+    .insert_resource(WaterSettings {
+      spawn_tiles: None,
+      ..default()
+    })
+    .add_plugins(WaterPlugin)
+    .add_plugins(CausticsPlugin)
+    // Wireframe
+    .add_plugins(WireframePlugin)
+    .add_systems(Startup, setup)
+    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::KeyR)));
+
+  #[cfg(feature = "atmosphere")]
+  app.add_plugins(SpectatorPlugin); // Simple movement for this example
+
+  app.run();
+}
+
+fn setup_caustics(mut commands: Commands,
+                  mut images: ResMut<Assets<Image>>) {
+    let size = Extent3d {
+            width: 512,
+            height: 512,
+            ..default()
+        };
+    // This is the texture that will be rendered to.
+    let mut image = Image {
+        texture_descriptor: TextureDescriptor {
+            label: "caustics".into(),
+            size,
+            dimension: TextureDimension::D2,
+            format: TextureFormat::Bgra8UnormSrgb,
+            mip_level_count: 1,
+            sample_count: 1,
+            usage: TextureUsages::TEXTURE_BINDING
+                | TextureUsages::COPY_DST
+                | TextureUsages::RENDER_ATTACHMENT,
+            view_formats: &[],
+        },
+        ..default()
+    };
+    image.resize(size);
+    let image_handle = images.add(image);
+
+}
+
+fn toggle_wireframe(
+  mut show_wireframe: Local<bool>,
+  query: Query<Entity, With<Handle<Mesh>>>,
+  mut commands: Commands,
+) {
+  // Update flag.
+  *show_wireframe = !*show_wireframe;
+
+  for entity in query.iter() {
+    let mut entity = commands.entity(entity);
+    if *show_wireframe {
+      entity.insert(Wireframe);
+    } else {
+      entity.remove::<Wireframe>();
+    }
+  }
+}
+
+/// Setup water.
+fn setup(
+  mut commands: Commands,
+  settings: Res<WaterSettings>,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardWaterMaterial>>,
+  mut caustics_materials: ResMut<Assets<CausticsMaterial>>,
+) {
+  // Mesh for water.
+  let mesh: Handle<Mesh> = meshes.add(
+    shape::Cube {
+      size: CUBE_SIZE,
+    }
+  );
+  // Water material.
+  let material = materials.add(StandardWaterMaterial {
+    base: default(),
+    extension: WaterMaterial {
+      amplitude: settings.amplitude,
+      coord_scale: Vec2::new(256.0, 256.0),
+      ..default()
+    },
+  });
+
+  commands
+    .spawn((
+      Name::new("Water world".to_string()),
+      MaterialMeshBundle {
+        mesh: mesh.clone(),
+        material,
+        transform: Transform::from_xyz(0.0, 0.0, 0.0)
+              .with_rotation(Quat::from_rotation_x(0.2)),
+        ..default()
+      },
+      // caustics_materials.add(CausticsMaterial {
+      //     plane: Vec4::Y,
+      //     light: -Vec4::Y,
+      // }),
+      NotShadowCaster,
+    ));
+
+  commands
+    .spawn((
+      Name::new("Water world".to_string()),
+      MaterialMeshBundle {
+        mesh,
+      material: caustics_materials.add(CausticsMaterial {
+          plane: Vec4::Y,
+          light: -Vec4::Y,
+      }),
+        transform: Transform::from_xyz(0.0, 0.0, 0.0)
+              .with_rotation(Quat::from_rotation_x(0.2)),
+        ..default()
+      },
+      NotShadowCaster,
+    ));
+
+  // light
+  commands.spawn(PointLightBundle {
+    transform: Transform::from_xyz(4.0, CUBE_SIZE + 8.0, 4.0),
+    point_light: PointLight {
+      intensity: 1600.0, // lumens - roughly a 100W non-halogen incandescent bulb
+      shadows_enabled: true,
+      ..default()
+    },
+    ..default()
+  });
+
+  // camera
+  let mut cam = commands.spawn((Camera3dBundle {
+    transform: Transform::from_xyz(-40.0, CUBE_SIZE + 5.0, 0.0)
+      .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+    ..default()
+  },
+  ));
+
+  #[cfg(feature = "atmosphere")]
+  cam.insert(Spectator);
+
+  #[cfg(feature = "depth_prepass")]
+  {
+    // This will write the depth buffer to a texture that you can use in the main pass
+    cam.insert(DepthPrepass);
+  }
+  // This is just to keep the compiler happy when not using `depth_prepass` feature.
+  cam.insert(Name::new("Camera"));
+}

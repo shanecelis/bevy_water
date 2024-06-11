@@ -1,0 +1,4 @@
+#+title: Todo
+* Use math instead of shapes
+Plane subdivisions is a big deal.
+* Render caustics
