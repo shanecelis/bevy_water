@@ -1,8 +1,8 @@
 use bevy::pbr::NotShadowCaster;
 use bevy::prelude::*;
 
-pub mod material;
 pub mod caustics;
+pub mod material;
 use material::*;
 
 pub const WATER_SIZE: u32 = 256;
@@ -88,9 +88,7 @@ impl WaterTileBundle {
     let tile_pos = offset + WATER_HALF_SIZE;
     Self {
       name: Name::new(format!("Water Tile {}x{}", offset.x, offset.y)),
-      tile: WaterTile {
-        offset,
-      },
+      tile: WaterTile { offset },
       mesh: MaterialMeshBundle {
         mesh,
         material,
@@ -116,12 +114,10 @@ fn setup_water(
   };
   let water_height = settings.height;
   // Generate mesh for water.
-  let mesh: Handle<Mesh> = meshes.add(
-    Mesh::from(shape::Plane {
-      size: WATER_SIZE as f32,
-      subdivisions: WATER_SIZE / 4,
-    })
-  );
+  let mesh: Handle<Mesh> = meshes.add(Mesh::from(shape::Plane {
+    size: WATER_SIZE as f32,
+    subdivisions: WATER_SIZE / 4,
+  }));
 
   commands
     .spawn(WaterBundle {
@@ -153,7 +149,7 @@ fn setup_water(
               coord_offset,
               coord_scale: Vec2::new(WATER_SIZE as f32, WATER_SIZE as f32),
               ..default()
-            }
+            },
           });
 
           parent.spawn((
@@ -165,7 +161,10 @@ fn setup_water(
     });
 }
 
-fn update_materials(settings: Res<WaterSettings>, mut materials: ResMut<Assets<StandardWaterMaterial>>) {
+fn update_materials(
+  settings: Res<WaterSettings>,
+  mut materials: ResMut<Assets<StandardWaterMaterial>>,
+) {
   if !settings.update_materials {
     // Don't update water materials.
     return;
@@ -192,6 +191,9 @@ impl Plugin for WaterPlugin {
       .register_type::<WaterSettings>()
       .add_plugins(WaterMaterialPlugin)
       .add_systems(Startup, setup_water)
-      .add_systems(Update, update_materials.run_if(resource_changed::<WaterSettings>));
+      .add_systems(
+        Update,
+        update_materials.run_if(resource_changed::<WaterSettings>),
+      );
   }
 }

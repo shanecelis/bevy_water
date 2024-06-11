@@ -1,14 +1,14 @@
 #[cfg(feature = "depth_prepass")]
 use bevy::core_pipeline::prepass::DepthPrepass;
 
-use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
+use bevy::pbr::NotShadowCaster;
 use bevy::{input::common_conditions, prelude::*};
 
 #[cfg(feature = "atmosphere")]
 use bevy_spectator::*;
 
-use bevy_water::material::{WaterMaterial, StandardWaterMaterial};
+use bevy_water::material::{StandardWaterMaterial, WaterMaterial};
 use bevy_water::*;
 
 const RADIUS: f32 = 10.0;
@@ -16,7 +16,8 @@ const RADIUS: f32 = 10.0;
 fn main() {
   let mut app = App::new();
 
-  app.add_plugins(DefaultPlugins)
+  app
+    .add_plugins(DefaultPlugins)
     .insert_resource(WaterSettings {
       spawn_tiles: None,
       ..default()
@@ -25,7 +26,10 @@ fn main() {
     // Wireframe
     .add_plugins(WireframePlugin)
     .add_systems(Startup, setup)
-    .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::KeyR)));
+    .add_systems(
+      Update,
+      toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::KeyR)),
+    );
 
   #[cfg(feature = "atmosphere")]
   app.add_plugins(SpectatorPlugin); // Simple movement for this example
@@ -58,13 +62,12 @@ fn setup(
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardWaterMaterial>>,
 ) {
-  let mesh: Mesh =
-    shape::UVSphere {
-      radius: RADIUS,
-      sectors: 48,
-      stacks: 36,
-    }
-    .into();
+  let mesh: Mesh = shape::UVSphere {
+    radius: RADIUS,
+    sectors: 48,
+    stacks: 36,
+  }
+  .into();
   // Mesh for water.
   let mesh: Handle<Mesh> = meshes.add(mesh);
   // Water material.
@@ -77,17 +80,16 @@ fn setup(
     },
   });
 
-  commands
-    .spawn((
-      Name::new("Water world".to_string()),
-      MaterialMeshBundle {
-        mesh,
-        material,
-        transform: Transform::from_xyz(0.0, 0.0, 0.0),
-        ..default()
-      },
-      NotShadowCaster,
-    ));
+  commands.spawn((
+    Name::new("Water world".to_string()),
+    MaterialMeshBundle {
+      mesh,
+      material,
+      transform: Transform::from_xyz(0.0, 0.0, 0.0),
+      ..default()
+    },
+    NotShadowCaster,
+  ));
 
   // light
   commands.spawn(PointLightBundle {
@@ -105,8 +107,7 @@ fn setup(
     transform: Transform::from_xyz(-40.0, RADIUS + 5.0, 0.0)
       .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
     ..default()
-  },
-  ));
+  },));
 
   #[cfg(feature = "atmosphere")]
   cam.insert(Spectator);
