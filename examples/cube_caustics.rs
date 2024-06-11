@@ -4,7 +4,10 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::{input::common_conditions, prelude::*};
-use bevy::render::render_resource::{TextureDescriptor, TextureFormat, TextureDimension, TextureUsages, Extent3d};
+use bevy::render::{
+  view::RenderLayers,
+  render_resource::{TextureDescriptor, TextureFormat, TextureDimension, TextureUsages, Extent3d},
+};
 
 use bevy::pbr::{ExtendedMaterial, MaterialExtension};
 #[cfg(feature = "atmosphere")]
@@ -15,6 +18,10 @@ use bevy_water::*;
 use bevy_water::caustics::*;
 
 const CUBE_SIZE: f32 = 10.0;
+
+
+#[derive(Component)]
+struct CausticsPass;
 
 fn main() {
   let mut app = App::new();
@@ -28,7 +35,7 @@ fn main() {
     .add_plugins(CausticsPlugin)
     // Wireframe
     .add_plugins(WireframePlugin)
-    .add_systems(Startup, setup)
+    .add_systems(Startup, (setup, setup_caustics))
     .add_systems(Update, toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::KeyR)));
 
   #[cfg(feature = "atmosphere")]
@@ -38,6 +45,9 @@ fn main() {
 }
 
 fn setup_caustics(mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  settings: Res<WaterSettings>,
+  mut caustics_materials: ResMut<Assets<CausticsWaterMaterial>>,
                   mut images: ResMut<Assets<Image>>) {
     let size = Extent3d {
             width: 512,
@@ -62,6 +72,55 @@ fn setup_caustics(mut commands: Commands,
     };
     image.resize(size);
     let image_handle = images.add(image);
+
+  let water_material = WaterMaterial {
+      amplitude: settings.amplitude,
+      coord_scale: Vec2::new(256.0, 256.0),
+      ..default()
+    };
+
+  let mesh: Handle<Mesh> = meshes.add(
+    shape::Cube {
+      size: CUBE_SIZE,
+    }
+  );
+  let caustics_pass_layer = RenderLayers::layer(1);
+  commands
+    .spawn((
+      Name::new("Water world".to_string()),
+      MaterialMeshBundle {
+        mesh,
+      material: caustics_materials.add(ExtendedMaterial {
+        base: CausticsMaterial {
+          plane: Vec4::Y,
+          light: Vec4::new(4.0, CUBE_SIZE + 8.0, 4.0, 0.0),
+      },
+        extension: WaterBindMaterial(water_material)
+      }),
+        transform: Transform::from_xyz(0.0, 0.0, 0.0)
+              .with_rotation(Quat::from_rotation_x(0.2)),
+        ..default()
+      },
+      CausticsPass,
+      NotShadowCaster,
+      caustics_pass_layer,
+    ));
+
+    commands.spawn((
+        Camera3dBundle {
+            camera: Camera {
+                // render before the "main pass" camera
+                order: -1,
+                target: image_handle.clone().into(),
+                // clear_color: Color::WHITE.into(),
+                ..default()
+            },
+            // transform: Transform::from_translation(Vec3::new(0.0, 0.0, 15.0))
+            //     .looking_at(Vec3::ZERO, Vec3::Y),
+            ..default()
+        },
+        caustics_pass_layer,
+    ));
 
 }
 
@@ -89,7 +148,6 @@ fn setup(
   settings: Res<WaterSettings>,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardWaterMaterial>>,
-  mut caustics_materials: ResMut<Assets<CausticsWaterMaterial>>,
 ) {
   // Mesh for water.
   let mesh: Handle<Mesh> = meshes.add(
@@ -122,25 +180,6 @@ fn setup(
       //     plane: Vec4::Y,
       //     light: -Vec4::Y,
       // }),
-      NotShadowCaster,
-    ));
-
-  commands
-    .spawn((
-      Name::new("Water world".to_string()),
-      MaterialMeshBundle {
-        mesh,
-      material: caustics_materials.add(ExtendedMaterial {
-        base: CausticsMaterial {
-          plane: Vec4::Y,
-          light: Vec4::new(4.0, CUBE_SIZE + 8.0, 4.0, 0.0),
-      },
-        extension: WaterBindMaterial(water_material)
-      }),
-        transform: Transform::from_xyz(0.0, 0.0, 0.0)
-              .with_rotation(Quat::from_rotation_x(0.2)),
-        ..default()
-      },
       NotShadowCaster,
     ));
 
