@@ -9,7 +9,7 @@ use bevy::core_pipeline::Skybox;
 
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::{
-  app::AppExit, prelude::*, utils::Duration,
+  app::AppExit, prelude::*,
   render::{
     mesh::VertexAttributeValues,
     render_resource::TextureFormat,
@@ -29,7 +29,6 @@ use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
 use bevy_prototype_debug_lines::{DebugLines, DebugLinesPlugin};
 
 use bevy_water::*;
-use bevy_water::water::material::StandardWaterMaterial;
 
 #[cfg(not(feature = "atmosphere"))]
 const SKYBOX_NAME: &str = "textures/table_mountain_2_puresky_4k_cubemap.jpg";
@@ -457,7 +456,7 @@ fn setup(
   };
   commands
     .spawn((
-      Name::new(format!("Sea floor")),
+      Name::new("Sea floor".to_string()),
       MaterialMeshBundle {
         mesh: floor_mesh.clone(),
         material: sandy.clone(),
@@ -478,7 +477,7 @@ fn setup(
   };
   commands
     .spawn((
-      Name::new(format!("Sandy island")),
+      Name::new("Sandy island".to_string()),
       MaterialMeshBundle {
         mesh: island_mesh.clone(),
         material: sandy.clone(),

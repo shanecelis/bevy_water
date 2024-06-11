@@ -118,7 +118,7 @@ fn setup_water(
   let mesh: Handle<Mesh> = meshes.add(
     Mesh::from(shape::Plane {
       size: WATER_SIZE as f32,
-      subdivisions: WATER_SIZE as u32 / 4,
+      subdivisions: WATER_SIZE / 4,
     })
   );
 

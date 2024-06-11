@@ -386,7 +386,7 @@ fn setup(
   // Spawn simple terrain plane.
   commands
     .spawn((
-      Name::new(format!("Terrain")),
+      Name::new("Terrain".to_string()),
       MaterialMeshBundle {
         mesh: meshes.add(
           Mesh::from(shape::Plane {
@@ -403,7 +403,7 @@ fn setup(
   // Spawn fake island.
   commands
     .spawn((
-      Name::new(format!("Fake island")),
+      Name::new("Fake island".to_string()),
       MaterialMeshBundle {
         mesh: meshes.add(
           Mesh::try_from(shape::Icosphere {

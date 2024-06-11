@@ -85,7 +85,7 @@ fn setup(
   // Spawn water entity.
   commands
     .spawn((
-      Name::new(format!("Water world")),
+      Name::new("Water world".to_string()),
       MaterialMeshBundle {
         mesh,
         material,
@@ -111,7 +111,7 @@ fn setup(
   // Spawn planet entity.
   commands
     .spawn((
-      Name::new(format!("Planet terrain")),
+      Name::new("Planet terrain".to_string()),
       MaterialMeshBundle {
         mesh,
         material,

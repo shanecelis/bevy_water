@@ -79,7 +79,7 @@ fn setup(
 
   commands
     .spawn((
-      Name::new(format!("Water world")),
+      Name::new("Water world".to_string()),
       MaterialMeshBundle {
         mesh,
         material,
