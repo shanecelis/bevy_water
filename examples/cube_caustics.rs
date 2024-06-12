@@ -14,13 +14,11 @@ use bevy::pbr::{ExtendedMaterial, MaterialExtension};
 use bevy_spectator::*;
 
 use bevy_water::caustics::*;
+use bevy_water::underwater::*;
 use bevy_water::material::{StandardWaterMaterial, WaterMaterial};
 use bevy_water::*;
 
 const CUBE_SIZE: f32 = 10.0;
-
-#[derive(Component)]
-struct CausticsPass;
 
 fn main() {
   let mut app = App::new();
@@ -28,6 +26,7 @@ fn main() {
   app
     .add_plugins(DefaultPlugins)
     .insert_resource(WaterSettings {
+        amplitude: 2.0,
       spawn_tiles: None,
       ..default()
     })
@@ -52,6 +51,7 @@ fn setup_caustics(
   mut meshes: ResMut<Assets<Mesh>>,
   settings: Res<WaterSettings>,
   mut caustics_materials: ResMut<Assets<CausticsWaterMaterial>>,
+  mut underwater_materials: ResMut<Assets<UnderwaterMaterial>>,
   mut images: ResMut<Assets<Image>>,
 ) {
   let size = Extent3d {
@@ -84,6 +84,29 @@ fn setup_caustics(
     ..default()
   };
 
+  commands.spawn((
+    Name::new("Ground"),
+    MaterialMeshBundle {
+      mesh: meshes.add(Mesh::from(shape::Plane {
+        size: CUBE_SIZE,
+        ..default()
+      })),
+      // material: ground_materials.add(Color::WHITE),
+      material: underwater_materials.add(UnderwaterMaterial {
+          base: Color::WHITE.into(),
+          extension: UnderwaterExtension {
+              water_plane: Vec4::new(0.0, 1.0, 0.0, 0.0),
+              water_color: Vec4::ONE,
+              light_dir: Vec4::new(4.0, CUBE_SIZE + 8.0, 4.0, 0.0),
+              caustics_texture: image_handle.clone(),
+          }
+      }),
+      transform: Transform::from_xyz(0.0, -10.0, 0.0),
+      ..default()
+    },
+    NotShadowCaster,
+  ));
+
   let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: CUBE_SIZE });
   let caustics_pass_layer = RenderLayers::layer(1);
   commands.spawn((
@@ -92,7 +115,7 @@ fn setup_caustics(
       mesh,
       material: caustics_materials.add(ExtendedMaterial {
         base: CausticsMaterial {
-          plane: Vec4::Y,
+          plane: Vec4::new(0.0, 1.0, 0.0, -10.0),
           light: Vec4::new(4.0, CUBE_SIZE + 8.0, 4.0, 0.0),
         },
         extension: WaterBindMaterial(water_material),
@@ -100,7 +123,6 @@ fn setup_caustics(
       transform: Transform::from_xyz(0.0, 0.0, 0.0).with_rotation(Quat::from_rotation_x(0.2)),
       ..default()
     },
-    CausticsPass,
     NotShadowCaster,
     caustics_pass_layer,
   ));
@@ -146,14 +168,21 @@ fn setup(
   settings: Res<WaterSettings>,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardWaterMaterial>>,
+  mut ground_materials: ResMut<Assets<StandardMaterial>>,
 ) {
   // Mesh for water.
-  let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: CUBE_SIZE });
-  let water_material = WaterMaterial {
-    amplitude: settings.amplitude,
-    coord_scale: Vec2::new(256.0, 256.0),
-    ..default()
-  };
+  // let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: CUBE_SIZE });
+
+  let mesh: Handle<Mesh> = meshes.add(Mesh::from(shape::Plane {
+        size: CUBE_SIZE,
+      subdivisions: 10,
+        ..default()
+      }));
+  let water_material =  WaterMaterial {
+      amplitude: settings.amplitude,
+      coord_scale: Vec2::new(2.0, 2.0),
+      ..default()
+    };
   // Water material.
   let material = materials.add(StandardWaterMaterial {
     base: default(),
@@ -165,7 +194,7 @@ fn setup(
     MaterialMeshBundle {
       mesh: mesh.clone(),
       material,
-      transform: Transform::from_xyz(0.0, 0.0, 0.0).with_rotation(Quat::from_rotation_x(0.2)),
+      transform: Transform::from_xyz(0.0, 0.0, 0.0),
       ..default()
     },
     // caustics_materials.add(CausticsMaterial {
@@ -174,6 +203,20 @@ fn setup(
     // }),
     NotShadowCaster,
   ));
+
+  // commands.spawn((
+  //   Name::new("Ground"),
+  //   MaterialMeshBundle {
+  //     mesh: meshes.add(Mesh::from(shape::Plane {
+  //       size: CUBE_SIZE,
+  //       ..default()
+  //     })),
+  //     material: ground_materials.add(Color::WHITE),
+  //     transform: Transform::from_xyz(0.0, -10.0, 0.0),
+  //     ..default()
+  //   },
+  //   NotShadowCaster,
+  // ));
 
   // light
   commands.spawn(PointLightBundle {

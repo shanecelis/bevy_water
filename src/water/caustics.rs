@@ -12,7 +12,10 @@ use bevy::render::{
   renderer::RenderDevice,
   texture::FallbackImage,
 };
+use crate::water::underwater::*;
 
+/// We bind all the same stuff as WaterMaterial, but we don't draw it like
+/// WaterMaterial.
 #[derive(Clone, Asset, Reflect, Default)]
 pub struct WaterBindMaterial(pub WaterMaterial);
 
@@ -43,10 +46,21 @@ pub struct CausticsPlugin;
 
 pub type CausticsWaterMaterial = ExtendedMaterial<CausticsMaterial, WaterBindMaterial>;
 
+#[derive(Resource)]
+struct CausticsFunctions(Handle<Shader>);
+
 impl Plugin for CausticsPlugin {
   fn build(&self, app: &mut App) {
+    embedded_asset!(app, "water", "caustics_functions.wgsl");
     embedded_asset!(app, "water", "caustics.wgsl");
     app.add_plugins(MaterialPlugin::<CausticsWaterMaterial>::default());
+    embedded_asset!(app, "water", "underwater.wgsl");
+    app.add_plugins(MaterialPlugin::<UnderwaterMaterial>::default());
+
+    let asset_server = app.world.resource::<AssetServer>();
+    let caustics_functions = asset_server.load::<Shader>("embedded://bevy_water/caustics_functions.wgsl");
+    assert!(caustics_functions.is_strong());
+    app.insert_resource(CausticsFunctions(caustics_functions));
   }
 }
 

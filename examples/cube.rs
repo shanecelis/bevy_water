@@ -19,6 +19,7 @@ fn main() {
   app
     .add_plugins(DefaultPlugins)
     .insert_resource(WaterSettings {
+        amplitude: 2.0,
       spawn_tiles: None,
       ..default()
     })
@@ -61,25 +62,45 @@ fn setup(
   settings: Res<WaterSettings>,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardWaterMaterial>>,
+  mut ground_materials: ResMut<Assets<StandardMaterial>>,
 ) {
   // Mesh for water.
-  let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: CUBE_SIZE });
+  // let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: CUBE_SIZE });
+  let mesh: Handle<Mesh> = meshes.add(Mesh::from(shape::Plane {
+        size: CUBE_SIZE,
+      subdivisions: 10,
+        ..default()
+      }));
   // Water material.
   let material = materials.add(StandardWaterMaterial {
     base: default(),
     extension: WaterMaterial {
       amplitude: settings.amplitude,
-      coord_scale: Vec2::new(256.0, 256.0),
+      coord_scale: Vec2::new(2.0, 2.0),
       ..default()
     },
   });
 
   commands.spawn((
-    Name::new("Water world".to_string()),
+    Name::new("Water world"),
     MaterialMeshBundle {
       mesh,
       material,
       transform: Transform::from_xyz(0.0, 0.0, 0.0),
+      ..default()
+    },
+    NotShadowCaster,
+  ));
+
+  commands.spawn((
+    Name::new("Ground"),
+    MaterialMeshBundle {
+      mesh: meshes.add(Mesh::from(shape::Plane {
+        size: CUBE_SIZE,
+        ..default()
+      })),
+      material: ground_materials.add(Color::WHITE),
+      transform: Transform::from_xyz(0.0, -10.0, 0.0),
       ..default()
     },
     NotShadowCaster,

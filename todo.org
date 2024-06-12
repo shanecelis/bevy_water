@@ -2,5 +2,7 @@
 * Use math instead of shapes
 Plane subdivisions is a big deal.
 * [X] Render caustics to texture
-* [ ] Change cube_caustics to have two planes
+* [X] Change cube_caustics to have two planes
 * [ ] Add caustics shader for ground plane
+Not working yet.
+* [ ] Add egui texture view of caustics texture
