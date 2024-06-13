@@ -89,8 +89,8 @@ fn setup_caustics(
   info!("caustics image handle {:?}", image_handle.id());
 
   let water_material = WaterMaterial {
-    amplitude: settings.amplitude,
-    coord_scale: Vec2::new(256.0, 256.0),
+    // amplitude: settings.amplitude,
+    // coord_scale: Vec2::new(256.0, 256.0),
     ..default()
   };
 
@@ -203,8 +203,8 @@ fn setup(
         ..default()
       }));
   let water_material =  WaterMaterial {
-      amplitude: settings.amplitude,
-      coord_scale: Vec2::new(2.0, 2.0),
+      // amplitude: settings.amplitude,
+      // coord_scale: Vec2::new(2.0, 2.0),
       ..default()
     };
   // Water material.
@@ -290,6 +290,21 @@ mod tests {
         assert_eq!(mat * max_point, Vec4::new(1.0, 0.0, 1.0, 1.0));
         assert_eq!(mat * max_point_x, Vec4::new(1.0, 0.0, 0.0, 1.0));
         assert_eq!(mat * min_point, Vec4::new(0.0, 0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    fn test_world_to_uv_diffw() {
+        let size = CUBE_SIZE;
+        let half_size = size / 2.0;
+        let max_point = Vec4::new(half_size, 0.0, half_size, 5.0);
+        let max_point_x = Vec4::new(half_size, 0.0, -half_size, 4.0);
+        let min_point = Vec4::new(-half_size, 0.0, -half_size, -1.0);
+        let mat = Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
+            * Mat4::from_scale(Vec3::new(1.0/size, 1.0, 1.0/size))
+            ;
+        assert_eq!(mat * max_point, Vec4::new(1.0, 0.0, 1.0, 5.0));
+        assert_eq!(mat * max_point_x, Vec4::new(1.0, 0.0, 0.0, 4.0));
+        assert_eq!(mat * min_point, Vec4::new(0.0, 0.0, 0.0, -1.0));
     }
 
     #[test]
