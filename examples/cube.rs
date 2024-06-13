@@ -19,7 +19,7 @@ fn main() {
   app
     .add_plugins(DefaultPlugins)
     .insert_resource(WaterSettings {
-        amplitude: 2.0,
+        amplitude: 1.0,
       spawn_tiles: None,
       ..default()
     })

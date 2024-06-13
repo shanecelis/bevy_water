@@ -94,6 +94,9 @@ fn setup_caustics(
     ..default()
   };
 
+
+        let size = CUBE_SIZE;
+        let half_size = size / 2.0;
   commands.spawn((
     Name::new("Ground"),
     MaterialMeshBundle {
@@ -106,14 +109,16 @@ fn setup_caustics(
           base: Color::hex("f6dcbd").unwrap().into(),
           extension: UnderwaterExtension {
               water: water_material.clone().into(),
+              water_world_to_uv: Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
+            * Mat4::from_scale(Vec3::new(1.0/size, 1.0, 1.0/size)),
               water_plane: Vec4::new(0.0, 1.0, 0.0, 0.0),
               water_color: Color::hex("74ccf4").unwrap().into(),
               light_dir: -Vec4::new(4.0, CUBE_SIZE + 8.0, 4.0, 0.0),
               caustics_texture: image_handle.clone(),
           }
       }),
-      transform: Transform::from_xyz(0.0, -2.0, 0.0)
-            .with_rotation(Quat::from_rotation_z(-1.0))
+      transform: Transform::from_xyz(0.0, -10.0, 0.0)
+            // .with_rotation(Quat::from_rotation_z(-1.0))
             // .with_rotation(Quat::from_euler(EulerRot::YZX, TAU / 4.0, -1.0, 0.0))
             ,
       ..default()
@@ -266,4 +271,37 @@ fn setup(
   }
   // This is just to keep the compiler happy when not using `depth_prepass` feature.
   cam.insert(Name::new("Camera"));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_world_to_uv() {
+        let size = CUBE_SIZE;
+        let half_size = size / 2.0;
+        let max_point = Vec4::new(half_size, 0.0, half_size, 1.0);
+        let max_point_x = Vec4::new(half_size, 0.0, -half_size, 1.0);
+        let min_point = Vec4::new(-half_size, 0.0, -half_size, 1.0);
+        let mat = Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
+            * Mat4::from_scale(Vec3::new(1.0/size, 1.0, 1.0/size))
+            ;
+        assert_eq!(mat * max_point, Vec4::new(1.0, 0.0, 1.0, 1.0));
+        assert_eq!(mat * max_point_x, Vec4::new(1.0, 0.0, 0.0, 1.0));
+        assert_eq!(mat * min_point, Vec4::new(0.0, 0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    fn test_world_to_uv2() {
+        let size = CUBE_SIZE;
+        let half_size = size / 2.0;
+        let max_point = Vec4::new(half_size, 1.0, half_size, 1.0);
+        let min_point = Vec4::new(-half_size, 2.0, -half_size, 1.0);
+        let mat = Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
+            * Mat4::from_scale(Vec3::new(1.0/size, 1.0, 1.0/size))
+            ;
+        assert_eq!(mat * max_point, Vec4::new(1.0, 1.0, 1.0, 1.0));
+        assert_eq!(mat * min_point, Vec4::new(0.0, 2.0, 0.0, 1.0));
+    }
 }

@@ -20,6 +20,7 @@ pub type UnderwaterMaterial = ExtendedMaterial<StandardMaterial, UnderwaterExten
 pub struct UnderwaterExtension {
   #[uniform(100)]
   pub water: WaterMaterialUniform,
+  pub water_world_to_uv: Mat4,
   pub water_plane: Vec4,
   pub water_color: Color,
   pub light_dir: Vec4,
@@ -33,6 +34,7 @@ pub struct UnderwaterExtension {
 #[derive(Clone, Default, ShaderType)]
 struct UnderwaterExtensionUniform {
   water: WaterMaterialUniform,
+  water_world_to_uv: Mat4,
   water_plane: Vec4,
   water_color: Vec4,
   light_dir: Vec4,
@@ -43,6 +45,7 @@ impl AsBindGroupShaderType<UnderwaterExtensionUniform> for UnderwaterExtension {
   fn as_bind_group_shader_type(&self, _images: &RenderAssets<Image>) -> UnderwaterExtensionUniform {
     UnderwaterExtensionUniform {
       water: self.water.clone(),
+      water_world_to_uv: self.water_world_to_uv,
       water_plane: self.water_plane,
       water_color: self.water_color.rgba_linear_to_vec4(),
       light_dir: self.light_dir,

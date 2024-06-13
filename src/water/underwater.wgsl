@@ -19,6 +19,7 @@
 #import bevy_water::caustics_functions as caustics_fn
 
 struct UnderwaterMaterial {
+    water_world_to_uv: mat4x4<f32>,
     water_plane: vec4<f32>,
     water_color: vec4<f32>,
     light_dir: vec4<f32>,
@@ -46,10 +47,14 @@ fn fragment(
     pbr_input.material.base_color = alpha_discard(pbr_input.material, pbr_input.material.base_color);
 
     // XXX: Use our own UV.
+    let water_uv = (material.water_world_to_uv * in.world_position).xz;
+    // let water_uv = (in.world_position * material.water_world_to_uv).xz;
 
-    let w_pos = water_fn::uv_to_coord(in.uv);
+    // let w_pos = water_fn::uv_to_coord(water_uv);
+    let w_pos = water_uv;
+    // let height = water_fn::get_wave_height(w_pos); // Water height from water_plane.
     let height = water_fn::get_wave_height(w_pos); // Water height from water_plane.
-    let depth = caustics_fn::distance_to_plane(in.world_position.xyz, material.water_plane) - height;
+    let depth = caustics_fn::distance_to_plane(in.world_position.xyz, material.water_plane);// + height;
     if (depth < 0.0) {
         // We're underwater.
         // pbr_input.material.base_color *= material.water_color;
@@ -75,9 +80,12 @@ fn fragment(
 
     // apply in-shader post processing (fog, alpha-premultiply, and also tonemapping, debanding if the camera is non-hdr)
     // note this does not include fullscreen postprocessing effects like bloom.
-    out.color = main_pass_post_lighting_processing(pbr_input, out.color);
+    // out.color = main_pass_post_lighting_processing(pbr_input, out.color);
 
     // out.color = vec4<f32>(caustic.r, caustic.r, caustic.r, 1.0);
+    // XXX: This does not make any sense!
+    out.color = vec4<f32>(water_uv, 0., 0. * depth, 1.0);
+    // out.color = vec4<f32>(in.world_position.xz / 2.0, 0. * depth, 1.0);
     // out.color = out.color * 2.0;
 #endif
 
