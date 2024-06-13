@@ -43,7 +43,7 @@ impl Default for WaterMaterial {
   }
 }
 
-#[derive(Clone, Default, ShaderType)]
+#[derive(Clone, Default, ShaderType, Reflect)]
 pub struct WaterMaterialUniform {
   pub deep_color: Color,
   pub shallow_color: Color,
@@ -53,6 +53,21 @@ pub struct WaterMaterialUniform {
   pub amplitude: f32,
   pub clarity: f32,
   pub edge_scale: f32,
+}
+
+impl From<WaterMaterial> for WaterMaterialUniform {
+   fn from(material: WaterMaterial) -> Self {
+    WaterMaterialUniform {
+      amplitude: material.amplitude,
+      clarity: material.clarity,
+      deep_color: material.deep_color,
+      shallow_color: material.shallow_color,
+      edge_scale: material.edge_scale,
+      edge_color: material.edge_color,
+      coord_offset: material.coord_offset,
+      coord_scale: material.coord_scale,
+    }
+   }
 }
 
 impl AsBindGroupShaderType<WaterMaterialUniform> for WaterMaterial {

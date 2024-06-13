@@ -18,6 +18,8 @@ use bevy_water::underwater::*;
 use bevy_water::material::{StandardWaterMaterial, WaterMaterial};
 use bevy_water::*;
 use bevy_inspector_egui::quick;//::AssetInspectorPlugin;
+use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
+use std::f32::consts::TAU;
 
 const CUBE_SIZE: f32 = 10.0;
 
@@ -39,6 +41,7 @@ fn main() {
 
     // Wireframe
     .add_plugins(WireframePlugin)
+    .add_plugins(PanOrbitCameraPlugin)
     .add_systems(Startup, (setup, setup_caustics))
     .add_systems(
       Update,
@@ -102,13 +105,17 @@ fn setup_caustics(
       material: underwater_materials.add(UnderwaterMaterial {
           base: Color::hex("f6dcbd").unwrap().into(),
           extension: UnderwaterExtension {
+              water: water_material.clone().into(),
               water_plane: Vec4::new(0.0, 1.0, 0.0, 0.0),
               water_color: Color::hex("74ccf4").unwrap().into(),
               light_dir: -Vec4::new(4.0, CUBE_SIZE + 8.0, 4.0, 0.0),
               caustics_texture: image_handle.clone(),
           }
       }),
-      transform: Transform::from_xyz(0.0, -2.0, 0.0).with_rotation(Quat::from_rotation_z(-1.0)),
+      transform: Transform::from_xyz(0.0, -2.0, 0.0)
+            .with_rotation(Quat::from_rotation_z(-1.0))
+            // .with_rotation(Quat::from_euler(EulerRot::YZX, TAU / 4.0, -1.0, 0.0))
+            ,
       ..default()
     },
     NotShadowCaster,
@@ -246,7 +253,8 @@ fn setup(
     transform: Transform::from_xyz(0.0, CUBE_SIZE + 5.0, 40.0)
       .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
     ..default()
-  },));
+  },
+  PanOrbitCamera::default()));
 
   #[cfg(feature = "atmosphere")]
   cam.insert(Spectator);

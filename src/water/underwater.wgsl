@@ -47,7 +47,8 @@ fn fragment(
 
     // XXX: Use our own UV.
 
-    let height = water_fn::wave(in.uv); // Water height from water_plane.
+    let w_pos = water_fn::uv_to_coord(in.uv);
+    let height = water_fn::get_wave_height(w_pos); // Water height from water_plane.
     let depth = caustics_fn::distance_to_plane(in.world_position.xyz, material.water_plane) - height;
     if (depth < 0.0) {
         // We're underwater.
