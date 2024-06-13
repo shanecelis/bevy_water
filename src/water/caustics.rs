@@ -2,12 +2,13 @@ use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 
 use crate::water::WaterMaterial;
-use bevy::pbr::{ExtendedMaterial, MaterialExtension};
+use bevy::pbr::{ExtendedMaterial, MaterialExtension, MaterialExtensionPipeline, MaterialExtensionKey, MaterialPipeline, MaterialPipelineKey};
 use bevy::render::{
+    mesh::MeshVertexBufferLayout,
   render_asset::RenderAssets,
   render_resource::{
     AsBindGroup, AsBindGroupError, AsBindGroupShaderType, BindGroupLayout, BindGroupLayoutEntry,
-    ShaderRef, ShaderType, UnpreparedBindGroup,
+    ShaderRef, ShaderType, UnpreparedBindGroup, RenderPipelineDescriptor,SpecializedMeshPipelineError
   },
   renderer::RenderDevice,
   texture::FallbackImage,
@@ -51,6 +52,12 @@ struct CausticsFunctions(Handle<Shader>);
 
 impl Plugin for CausticsPlugin {
   fn build(&self, app: &mut App) {
+    app
+          .register_type::<CausticsMaterial>()
+          .register_type::<CausticsWaterMaterial>()
+          .register_type::<WaterBindMaterial>()
+          .register_type::<UnderwaterExtension>()
+          .register_type::<UnderwaterMaterial>();
     embedded_asset!(app, "water", "caustics_functions.wgsl");
     embedded_asset!(app, "water", "caustics.wgsl");
     app.add_plugins(MaterialPlugin::<CausticsWaterMaterial>::default());
@@ -94,4 +101,16 @@ impl Material for CausticsMaterial {
   fn fragment_shader() -> ShaderRef {
     "embedded://bevy_water/caustics.wgsl".into()
   }
+
+    fn specialize(
+        // _pipeline: &MaterialExtensionPipeline,
+        _pipeline: &MaterialPipeline<CausticsMaterial>,
+        descriptor: &mut RenderPipelineDescriptor,
+        _layout: &MeshVertexBufferLayout,
+        _key: MaterialPipelineKey<Self>,
+    ) -> Result<(), SpecializedMeshPipelineError> {
+        descriptor.primitive.cull_mode = None;
+        Ok(())
+    }
+
 }

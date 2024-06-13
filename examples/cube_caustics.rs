@@ -17,6 +17,7 @@ use bevy_water::caustics::*;
 use bevy_water::underwater::*;
 use bevy_water::material::{StandardWaterMaterial, WaterMaterial};
 use bevy_water::*;
+use bevy_inspector_egui::quick;//::AssetInspectorPlugin;
 
 const CUBE_SIZE: f32 = 10.0;
 
@@ -32,6 +33,10 @@ fn main() {
     })
     .add_plugins(WaterPlugin)
     .add_plugins(CausticsPlugin)
+    // .add_plugins(AssetInspectorPlugin::<Image>::default())
+    .add_plugins(quick::WorldInspectorPlugin::new())
+
+
     // Wireframe
     .add_plugins(WireframePlugin)
     .add_systems(Startup, (setup, setup_caustics))
@@ -65,7 +70,8 @@ fn setup_caustics(
       label: "caustics".into(),
       size,
       dimension: TextureDimension::D2,
-      format: TextureFormat::Bgra8UnormSrgb,
+      // format: TextureFormat::Bgra8UnormSrgb,
+      format: TextureFormat::Rgba32Float,
       mip_level_count: 1,
       sample_count: 1,
       usage: TextureUsages::TEXTURE_BINDING
@@ -77,6 +83,7 @@ fn setup_caustics(
   };
   image.resize(size);
   let image_handle = images.add(image);
+  info!("caustics image handle {:?}", image_handle.id());
 
   let water_material = WaterMaterial {
     amplitude: settings.amplitude,
@@ -93,21 +100,26 @@ fn setup_caustics(
       })),
       // material: ground_materials.add(Color::WHITE),
       material: underwater_materials.add(UnderwaterMaterial {
-          base: Color::WHITE.into(),
+          base: Color::hex("f6dcbd").unwrap().into(),
           extension: UnderwaterExtension {
               water_plane: Vec4::new(0.0, 1.0, 0.0, 0.0),
-              water_color: Vec4::ONE,
-              light_dir: Vec4::new(4.0, CUBE_SIZE + 8.0, 4.0, 0.0),
+              water_color: Color::hex("74ccf4").unwrap().into(),
+              light_dir: -Vec4::new(4.0, CUBE_SIZE + 8.0, 4.0, 0.0),
               caustics_texture: image_handle.clone(),
           }
       }),
-      transform: Transform::from_xyz(0.0, -10.0, 0.0),
+      transform: Transform::from_xyz(0.0, -2.0, 0.0).with_rotation(Quat::from_rotation_z(-1.0)),
       ..default()
     },
     NotShadowCaster,
   ));
 
-  let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: CUBE_SIZE });
+  let mesh: Handle<Mesh> = meshes.add(Mesh::from(shape::Plane {
+        size: CUBE_SIZE,
+      subdivisions: 10,
+        ..default()
+      }));
+  // let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: CUBE_SIZE });
   let caustics_pass_layer = RenderLayers::layer(1);
   commands.spawn((
     Name::new("Water world".to_string()),
@@ -115,12 +127,12 @@ fn setup_caustics(
       mesh,
       material: caustics_materials.add(ExtendedMaterial {
         base: CausticsMaterial {
-          plane: Vec4::new(0.0, 1.0, 0.0, -10.0),
+          plane: Vec4::new(0.0, 1.0, 0.0, -10.0), // XXX: Why do this when you could just add max_depth = -10?
           light: Vec4::new(4.0, CUBE_SIZE + 8.0, 4.0, 0.0),
         },
         extension: WaterBindMaterial(water_material),
       }),
-      transform: Transform::from_xyz(0.0, 0.0, 0.0).with_rotation(Quat::from_rotation_x(0.2)),
+      // transform: Transform::from_xyz(0.0, 0.0, 0.0).with_rotation(Quat::from_rotation_x(0.2)),
       ..default()
     },
     NotShadowCaster,
@@ -136,7 +148,7 @@ fn setup_caustics(
         // clear_color: Color::WHITE.into(),
         ..default()
       },
-      // transform: Transform::from_translation(Vec3::new(0.0, 0.0, 15.0))
+      // transform: Transform::from_translation(Vec3::new(0.0, 0.0, 15.0)),
       //     .looking_at(Vec3::ZERO, Vec3::Y),
       ..default()
     },
@@ -231,7 +243,7 @@ fn setup(
 
   // camera
   let mut cam = commands.spawn((Camera3dBundle {
-    transform: Transform::from_xyz(-40.0, CUBE_SIZE + 5.0, 0.0)
+    transform: Transform::from_xyz(0.0, CUBE_SIZE + 5.0, 40.0)
       .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
     ..default()
   },));

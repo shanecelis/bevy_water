@@ -25,11 +25,11 @@ struct UnderwaterMaterial {
     // quantize_steps: u32,
 }
 
-@group(2) @binding(100)
+@group(2) @binding(200)
 var<uniform> material: UnderwaterMaterial;
 
-@group(2) @binding(101) var caustics_texture: texture_2d<f32>;
-@group(2) @binding(102) var caustics_sampler: sampler;
+@group(2) @binding(201) var caustics_texture: texture_2d<f32>;
+@group(2) @binding(202) var caustics_sampler: sampler;
 
 @fragment
 fn fragment(
@@ -48,7 +48,7 @@ fn fragment(
     // XXX: Use our own UV.
 
     let height = water_fn::wave(in.uv); // Water height from water_plane.
-    let depth = caustics_fn::distance_to_plane(in.world_position.xyz, material.water_plane) + height;
+    let depth = caustics_fn::distance_to_plane(in.world_position.xyz, material.water_plane) - height;
     if (depth < 0.0) {
         // We're underwater.
         // pbr_input.material.base_color *= material.water_color;
@@ -58,7 +58,7 @@ fn fragment(
         let caustic = textureSample(caustics_texture, caustics_sampler, in.uv);
 
         /// I'd like to change the lighting intensity here.
-        pbr_input.material.base_color *= caustic.r * 100.0;
+        pbr_input.material.base_color = mix(pbr_input.material.base_color, material.water_color, saturate(abs(depth / 0.01)));// caustic.r * 1000.0;
     }
 
 #ifdef PREPASS_PIPELINE
@@ -76,7 +76,7 @@ fn fragment(
     // note this does not include fullscreen postprocessing effects like bloom.
     out.color = main_pass_post_lighting_processing(pbr_input, out.color);
 
-    // we can optionally modify the final result here
+    // out.color = vec4<f32>(caustic.r, caustic.r, caustic.r, 1.0);
     // out.color = out.color * 2.0;
 #endif
 

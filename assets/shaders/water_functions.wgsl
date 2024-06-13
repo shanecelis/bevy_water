@@ -7,7 +7,6 @@
 
 fn wave(p: vec2<f32>) -> f32 {
   let time = globals.time * .5 + 23.0;
-
   let time_x = time / 1.0;
   let time_y = time / 0.5;
   let wave_len_x = 5.0;
