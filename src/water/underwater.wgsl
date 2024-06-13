@@ -52,10 +52,10 @@ fn fragment(
     // let water_uv = in.world_position.xz / 10.0 + 0.5;
     // let water_uv = (in.world_position * material.water_world_to_uv).xz;
 
-    // let w_pos = water_fn::uv_to_coord(water_uv);
-    let w_pos = water_uv;
+    let w_pos = water_fn::uv_to_coord(water_uv);
+    // let w_pos = water_uv;
     // let height = water_fn::get_wave_height(w_pos); // Water height from water_plane.
-    let height = water_fn::get_wave_height(w_pos); // Water height from water_plane.
+    let height = water_fn::get_wave_height(w_pos) * 2.; // Water height from water_plane.
     let depth = caustics_fn::distance_to_plane(in.world_position.xyz, material.water_plane) - height;
     if (depth < 0.0) {
         // We're underwater.
@@ -66,7 +66,7 @@ fn fragment(
         let caustic = textureSample(caustics_texture, caustics_sampler, in.uv);
 
         /// I'd like to change the lighting intensity here.
-        // pbr_input.material.base_color = mix(pbr_input.material.base_color, material.water_color, saturate(abs(depth / 0.01)));// caustic.r * 1000.0;
+        // pbr_input.material.base_color = mix(pbr_input.material.base_color, material.water_color, saturate(abs(depth * 0.5)));// caustic.r * 1000.0;
         pbr_input.material.base_color =  material.water_color;
     }
 
