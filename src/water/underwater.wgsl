@@ -48,14 +48,14 @@ fn fragment(
     pbr_input.material.base_color = alpha_discard(pbr_input.material, pbr_input.material.base_color);
 
     // XXX: Use our own UV.
-    let water_uv = (material.water_world_to_uv * vec4<f32>(in.world_position.xyz, 0.0)).xz;
+    let water_uv = (material.water_world_to_uv * vec4<f32>(in.world_position.xyz, 1.0)).xz;
     // let water_uv = in.world_position.xz / 10.0 + 0.5;
     // let water_uv = (in.world_position * material.water_world_to_uv).xz;
 
     let w_pos = water_fn::uv_to_coord(water_uv);
     // let w_pos = water_uv;
     // let height = water_fn::get_wave_height(w_pos); // Water height from water_plane.
-    let height = water_fn::get_wave_height(w_pos) * 2.; // Water height from water_plane.
+    let height = water_fn::get_wave_height(w_pos); // Water height from water_plane.
     let depth = caustics_fn::distance_to_plane(in.world_position.xyz, material.water_plane) - height;
     if (depth < 0.0) {
         // We're underwater.
@@ -66,8 +66,8 @@ fn fragment(
         let caustic = textureSample(caustics_texture, caustics_sampler, in.uv);
 
         /// I'd like to change the lighting intensity here.
-        // pbr_input.material.base_color = mix(pbr_input.material.base_color, material.water_color, saturate(abs(depth * 0.5)));// caustic.r * 1000.0;
-        pbr_input.material.base_color =  material.water_color;
+        // pbr_input.material.base_color = mix(pbr_input.material.base_color, material.water_color, saturate(abs(depth * 3.0)));// caustic.r * 1000.0;
+        pbr_input.material.base_color = material.water_color;
     }
 
 #ifdef PREPASS_PIPELINE
@@ -83,11 +83,11 @@ fn fragment(
 
     // apply in-shader post processing (fog, alpha-premultiply, and also tonemapping, debanding if the camera is non-hdr)
     // note this does not include fullscreen postprocessing effects like bloom.
-    // out.color = main_pass_post_lighting_processing(pbr_input, out.color);
+    out.color = main_pass_post_lighting_processing(pbr_input, out.color);
 
     // out.color = vec4<f32>(caustic.r, caustic.r, caustic.r, 1.0);
     // XXX: This does not make any sense!
-    // out.color = vec4<f32>(water_uv.x % 1.0, 0., 0. * depth, 1.0);
+    // out.color = vec4<f32>(water_uv.y % 1.0, 0., 0. * depth, 1.0);
     // out.color = vec4<f32>(w_pos.x % 1.0, 0., 0. * depth, 1.0);
     // out.color = vec4<f32>(in.world_position.xz % 1.0, 0. * depth, 1.0);
     // out.color = vec4<f32>(in.world_position.y + 10.2, 0.0, 0. * depth, 1.0);

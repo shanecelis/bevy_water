@@ -89,7 +89,7 @@ fn setup_caustics(
   info!("caustics image handle {:?}", image_handle.id());
 
   let water_material = WaterMaterial {
-    // amplitude: settings.amplitude,
+    amplitude: settings.amplitude,
     // coord_scale: Vec2::new(256.0, 256.0),
     ..default()
   };
