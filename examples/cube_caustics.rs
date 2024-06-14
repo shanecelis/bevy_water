@@ -4,7 +4,8 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::pbr::NotShadowCaster;
 use bevy::render::{
-  render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages},
+    render_asset::RenderAssetUsages,
+  render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, },
   view::RenderLayers,
 };
 use bevy::{input::common_conditions, prelude::*};
@@ -21,7 +22,8 @@ use bevy_inspector_egui::quick;//::AssetInspectorPlugin;
 use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
 use std::f32::consts::TAU;
 
-const CUBE_SIZE: f32 = 10.0;
+const PLANE_SIZE: f32 = 10.0;
+const PLANE_SUBDIVISIONS: u32 = 20;
 
 fn main() {
   let mut app = App::new();
@@ -29,7 +31,8 @@ fn main() {
   app
     .add_plugins(DefaultPlugins)
     .insert_resource(WaterSettings {
-        amplitude: 2.0,
+        // amplitude: 2.0,
+        amplitude: 10.0,
       spawn_tiles: None,
       ..default()
     })
@@ -62,9 +65,14 @@ fn setup_caustics(
   mut underwater_materials: ResMut<Assets<UnderwaterMaterial>>,
   mut images: ResMut<Assets<Image>>,
 ) {
+  // let size = Extent3d {
+  //   width: 512,
+  //   height: 512,
+  //   ..default()
+  // };
   let size = Extent3d {
-    width: 512,
-    height: 512,
+    width: 1024,
+    height: 1024,
     ..default()
   };
   // This is the texture that will be rendered to.
@@ -95,30 +103,43 @@ fn setup_caustics(
   };
 
 
-        let size = CUBE_SIZE;
+        let size = PLANE_SIZE;
         let half_size = size / 2.0;
+
+    let white_dot = Image::new_fill(Extent3d { width: 2,
+                                               height: 2,
+                                               ..default() },
+                                    TextureDimension::D2,
+                                    &[255, 255, 255, 255],
+                                    TextureFormat::Rgba8UnormSrgb,
+                                    RenderAssetUsages::RENDER_WORLD);
   commands.spawn((
     Name::new("Ground"),
     MaterialMeshBundle {
       mesh: meshes.add(Mesh::from(shape::Plane {
-        size: CUBE_SIZE,
+        size: PLANE_SIZE,
         ..default()
       })),
       // material: ground_materials.add(Color::WHITE),
       material: underwater_materials.add(UnderwaterMaterial {
-          base: Color::hex("f6dcbd").unwrap().into(),
+          base: StandardMaterial {
+              base_color: Color::hex("f6dcbd").unwrap(),
+              // emissive: Color::WHITE,
+              // emissive_texture: Some(images.add(white_dot)),
+              ..default()
+          },
           extension: UnderwaterExtension {
               water: water_material.clone().into(),
               water_world_to_uv: Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
-            * Mat4::from_scale(Vec3::new(1.0/size, 1.0, 1.0/size)),
+                  * Mat4::from_scale(Vec3::new(1.0/size, 1.0, 1.0/size)),
               water_plane: Vec4::new(0.0, 1.0, 0.0, 0.0),
               water_color: Color::hex("74ccf4").unwrap().into(),
-              light_dir: -Vec4::new(4.0, CUBE_SIZE + 8.0, 4.0, 0.0),
+              light_dir: -Vec4::new(4.0, PLANE_SIZE + 8.0, 4.0, 0.0),
               caustics_texture: image_handle.clone(),
           }
       }),
-      transform: Transform::from_xyz(0.0, -1.0, 0.0)
-            .with_rotation(Quat::from_rotation_z(-1.0))
+      transform: Transform::from_xyz(0.0, -10.0, 0.0)
+            // .with_rotation(Quat::from_rotation_z(-1.0))
             // .with_rotation(Quat::from_euler(EulerRot::YZX, TAU / 4.0, -1.0, 0.0))
             ,
       ..default()
@@ -127,11 +148,11 @@ fn setup_caustics(
   ));
 
   let mesh: Handle<Mesh> = meshes.add(Mesh::from(shape::Plane {
-        size: CUBE_SIZE,
-      subdivisions: 10,
+        size: PLANE_SIZE,
+      subdivisions: PLANE_SUBDIVISIONS,
         ..default()
       }));
-  // let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: CUBE_SIZE });
+  // let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: PLANE_SIZE });
   let caustics_pass_layer = RenderLayers::layer(1);
   commands.spawn((
     Name::new("Water world".to_string()),
@@ -140,7 +161,7 @@ fn setup_caustics(
       material: caustics_materials.add(ExtendedMaterial {
         base: CausticsMaterial {
           plane: Vec4::new(0.0, 1.0, 0.0, -10.0), // XXX: Why do this when you could just add max_depth = -10?
-          light: Vec4::new(4.0, CUBE_SIZE + 8.0, 4.0, 0.0),
+          light: Vec4::new(4.0, PLANE_SIZE + 8.0, 4.0, 0.0),
         },
         extension: WaterBindMaterial(water_material),
       }),
@@ -195,11 +216,11 @@ fn setup(
   mut ground_materials: ResMut<Assets<StandardMaterial>>,
 ) {
   // Mesh for water.
-  // let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: CUBE_SIZE });
+  // let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: PLANE_SIZE });
 
   let mesh: Handle<Mesh> = meshes.add(Mesh::from(shape::Plane {
-        size: CUBE_SIZE,
-      subdivisions: 10,
+        size: PLANE_SIZE,
+      subdivisions: PLANE_SUBDIVISIONS,
         ..default()
       }));
   let water_material =  WaterMaterial {
@@ -232,7 +253,7 @@ fn setup(
   //   Name::new("Ground"),
   //   MaterialMeshBundle {
   //     mesh: meshes.add(Mesh::from(shape::Plane {
-  //       size: CUBE_SIZE,
+  //       size: PLANE_SIZE,
   //       ..default()
   //     })),
   //     material: ground_materials.add(Color::WHITE),
@@ -244,7 +265,7 @@ fn setup(
 
   // light
   commands.spawn(PointLightBundle {
-    transform: Transform::from_xyz(4.0, CUBE_SIZE + 8.0, 4.0),
+    transform: Transform::from_xyz(4.0, PLANE_SIZE + 8.0, 4.0),
     point_light: PointLight {
       intensity: 1600.0, // lumens - roughly a 100W non-halogen incandescent bulb
       shadows_enabled: true,
@@ -255,7 +276,7 @@ fn setup(
 
   // camera
   let mut cam = commands.spawn((Camera3dBundle {
-    transform: Transform::from_xyz(0.0, CUBE_SIZE + 5.0, 40.0)
+    transform: Transform::from_xyz(0.0, PLANE_SIZE + 5.0, 40.0)
       .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
     ..default()
   },
@@ -279,7 +300,7 @@ mod tests {
 
     #[test]
     fn test_world_to_uv() {
-        let size = CUBE_SIZE;
+        let size = PLANE_SIZE;
         let half_size = size / 2.0;
         let max_point = Vec4::new(half_size, 0.0, half_size, 1.0);
         let max_point_x = Vec4::new(half_size, 0.0, -half_size, 1.0);
@@ -294,7 +315,7 @@ mod tests {
 
     #[test]
     fn test_world_to_uv_diffw() {
-        let size = CUBE_SIZE;
+        let size = PLANE_SIZE;
         let half_size = size / 2.0;
         let max_point = Vec4::new(half_size, 0.0, half_size, 5.0);
         let max_point_x = Vec4::new(half_size, 0.0, -half_size, 4.0);
@@ -309,7 +330,7 @@ mod tests {
 
     #[test]
     fn test_world_to_uv2() {
-        let size = CUBE_SIZE;
+        let size = PLANE_SIZE;
         let half_size = size / 2.0;
         let max_point = Vec4::new(half_size, 1.0, half_size, 1.0);
         let min_point = Vec4::new(-half_size, 2.0, -half_size, 1.0);

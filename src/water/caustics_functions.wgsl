@@ -15,9 +15,6 @@ fn line_plane_intercept(line_pos: vec3<f32>, line_normal: vec3<f32>, plane: vec4
 }
 
 fn project(origin: vec3<f32>, ray: vec3<f32>, refractedLight: vec3<f32>, plane: vec4<f32>) -> vec3<f32> {
-    // This is close to the above.  But the cube has some different aspects when
-    // the ray intersects with the side of the cube.  It has a softer patch.
-    // plane.w = -_MaxDepth;
     let o = line_plane_intercept(origin, ray, plane);
     // o is now where the ray intersects the plane on the water surface.
     // let tplane: f32 = (-1.0 - o.y) / refractedLight.y;
@@ -26,7 +23,7 @@ fn project(origin: vec3<f32>, ray: vec3<f32>, refractedLight: vec3<f32>, plane: 
     // proj is the intersection of the refractedLight onto the XZ plane at (0, -1, 0).
     // The following preserves the behavior entirely.
     // plane.w = -1.0;
-    let proj = line_plane_intercept(o, refractedLight, plane);
+    let proj = line_plane_intercept(o, refractedLight, vec4<f32>(plane.xyz, -1));
     // let distance: f32 = (planeD - dot(planeN, lineP)) / dot(lineN, planeN);
     // return origin + refractedLight * tplane;
     return proj;

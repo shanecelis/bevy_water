@@ -54,12 +54,14 @@ fn fragment(
 
     let w_pos = water_fn::uv_to_coord(water_uv);
     // let w_pos = water_uv;
-    // let height = water_fn::get_wave_height(w_pos); // Water height from water_plane.
-    // let height = water_fn::get_wave_height(w_pos); // Water height from water_plane.
-    let caustic = textureSample(caustics_texture, caustics_sampler, water_uv) / 4;
-    let height = caustic.g;
+    let height = water_fn::get_wave_height(w_pos); // Water height from water_plane.
+    // let height = caustic.g;
 
+        let no_light = vec4<f32>(0,0,0,1);
+        let light_color = vec4<f32>(1,1,1,1);
+        // pbr_input.material.emissive = light_color * 10.;// * caustic.r * 100.0;// caustic.r * 1000.0;
     let depth = caustics_fn::distance_to_plane(in.world_position.xyz, material.water_plane) - height;
+    var caustic = no_light;
     // var caustic = vec4<f32>(1.0, 0, 0, 1);
     if (depth < 0.0) {
         // We're underwater.
@@ -67,13 +69,16 @@ fn fragment(
         let refracted_light = refract(-material.light_dir.xyz, material.water_plane.xyz, caustics_fn::IOR);
 
         let plane_intersect = caustics_fn::line_plane_intercept(in.world_position.xyz, refracted_light, material.water_plane);
-        // caustic = textureSample(caustics_texture, caustics_sampler, water_uv) / 4;
+
+        let caustic_uv = (material.water_world_to_uv * vec4<f32>(plane_intersect, 1.0)).xz;
+        caustic = textureSample(caustics_texture, caustics_sampler, caustic_uv);
+        // caustic = textureSample(caustics_texture, caustics_sampler, water_uv);
 
         /// I'd like to change the lighting intensity here.
         // pbr_input.material.base_color = mix(pbr_input.material.base_color, material.water_color, saturate(abs(depth * 3.0)));// caustic.r * 1000.0;
         pbr_input.material.base_color = material.water_color;
-        let light_color = vec4<f32>(1,1,1,1);
-        pbr_input.material.base_color = mix(pbr_input.material.base_color, light_color, caustic.r);// caustic.r * 1000.0;
+        // pbr_input.material.base_color = mix(pbr_input.material.base_color, light_color, caustic.r * 4.0);// caustic.r * 1000.0;
+        pbr_input.material.emissive = mix(no_light, light_color, caustic.r * 100.0);// caustic.r * 1000.0;
 
     }
 
@@ -93,10 +98,12 @@ fn fragment(
     out.color = main_pass_post_lighting_processing(pbr_input, out.color);
 
     if (depth < 0.0) {
-      out.color = vec4<f32>(caustic.r, caustic.r, caustic.r, 1.0);
+        // out.color = abs(caustic);//vec4<f32>(caustic.r, caustic.r, caustic.r, 1.0);
+      // out.color = vec4<f32>(caustic.r, caustic.r, caustic.r, 1.0);
     }
     // XXX: This does not make any sense!
-    // out.color = vec4<f32>(water_uv.y % 1.0, 0., 0. * depth, 1.0);
+    // out.color = vec4<f32>(water_uv.x % 1.0, 0., 0. * depth, 1.0);
+
     // out.color = vec4<f32>(w_pos.x % 1.0, 0., 0. * depth, 1.0);
     // out.color = vec4<f32>(in.world_position.xz % 1.0, 0. * depth, 1.0);
     // out.color = vec4<f32>(in.world_position.y + 10.2, 0.0, 0. * depth, 1.0);
