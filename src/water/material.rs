@@ -1,9 +1,9 @@
 use bevy::{
   asset::load_internal_asset,
-  pbr::{ExtendedMaterial, MaterialExtension},
+  pbr::{ExtendedMaterial, MaterialExtension, MaterialExtensionPipeline, MaterialExtensionKey},
   prelude::*,
   reflect::{std_traits::ReflectDefault, Reflect},
-  render::{render_asset::*, render_resource::*},
+  render::{render_asset::*, render_resource::*, mesh::MeshVertexBufferLayout},
 };
 
 pub type StandardWaterMaterial = ExtendedMaterial<StandardMaterial, WaterMaterial>;
@@ -135,6 +135,16 @@ impl MaterialExtension for WaterMaterial {
   fn deferred_fragment_shader() -> ShaderRef {
     water_fragment_shader()
   }
+
+fn specialize(
+    _pipeline: &MaterialExtensionPipeline,
+    descriptor: &mut RenderPipelineDescriptor,
+    _layout: &MeshVertexBufferLayout,
+    _key: MaterialExtensionKey<Self>,
+) -> Result<(), SpecializedMeshPipelineError> {
+    descriptor.primitive.cull_mode = None;
+    Ok(())
+}
 }
 
 #[derive(Default, Clone, Debug)]

@@ -22,8 +22,9 @@ use bevy_inspector_egui::quick;//::AssetInspectorPlugin;
 use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
 use std::f32::consts::TAU;
 
-const PLANE_SIZE: f32 = 10.0;
-const PLANE_SUBDIVISIONS: u32 = 20;
+const PLANE_SIZE: f32 = 1.0;
+const PLANE_SUBDIVISIONS: u32 = 200;
+const COORD_SCALE: Vec2 =  Vec2::new(1.0, 1.0);
 
 fn main() {
   let mut app = App::new();
@@ -31,8 +32,8 @@ fn main() {
   app
     .add_plugins(DefaultPlugins)
     .insert_resource(WaterSettings {
-        // amplitude: 2.0,
-        amplitude: 10.0,
+        amplitude: 0.1,
+        // amplitude: 10.0,
       spawn_tiles: None,
       ..default()
     })
@@ -98,6 +99,8 @@ fn setup_caustics(
 
   let water_material = WaterMaterial {
     amplitude: settings.amplitude,
+
+      coord_scale: COORD_SCALE,
     // coord_scale: Vec2::new(256.0, 256.0),
     ..default()
   };
@@ -106,13 +109,13 @@ fn setup_caustics(
         let size = PLANE_SIZE;
         let half_size = size / 2.0;
 
-    let white_dot = Image::new_fill(Extent3d { width: 2,
-                                               height: 2,
-                                               ..default() },
-                                    TextureDimension::D2,
-                                    &[255, 255, 255, 255],
-                                    TextureFormat::Rgba8UnormSrgb,
-                                    RenderAssetUsages::RENDER_WORLD);
+    // let white_dot = Image::new_fill(Extent3d { width: 2,
+    //                                            height: 2,
+    //                                            ..default() },
+    //                                 TextureDimension::D2,
+    //                                 &[255, 255, 255, 255],
+    //                                 TextureFormat::Rgba8UnormSrgb,
+    //                                 RenderAssetUsages::RENDER_WORLD);
   commands.spawn((
     Name::new("Ground"),
     MaterialMeshBundle {
@@ -134,11 +137,11 @@ fn setup_caustics(
                   * Mat4::from_scale(Vec3::new(1.0/size, 1.0, 1.0/size)),
               water_plane: Vec4::new(0.0, 1.0, 0.0, 0.0),
               water_color: Color::hex("74ccf4").unwrap().into(),
-              light_dir: -Vec4::new(4.0, PLANE_SIZE + 8.0, 4.0, 0.0),
+              light_dir: Vec4::new(0.65, 0.69, 0.3, 0.0),
               caustics_texture: image_handle.clone(),
           }
       }),
-      transform: Transform::from_xyz(0.0, -10.0, 0.0)
+      transform: Transform::from_xyz(0.0, -1.0, 0.0)
             // .with_rotation(Quat::from_rotation_z(-1.0))
             // .with_rotation(Quat::from_euler(EulerRot::YZX, TAU / 4.0, -1.0, 0.0))
             ,
@@ -149,7 +152,7 @@ fn setup_caustics(
 
   let mesh: Handle<Mesh> = meshes.add(Mesh::from(shape::Plane {
         size: PLANE_SIZE,
-      subdivisions: PLANE_SUBDIVISIONS,
+      subdivisions: PLANE_SUBDIVISIONS * 5,
         ..default()
       }));
   // let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: PLANE_SIZE });
@@ -225,7 +228,7 @@ fn setup(
       }));
   let water_material =  WaterMaterial {
       // amplitude: settings.amplitude,
-      // coord_scale: Vec2::new(2.0, 2.0),
+      coord_scale: COORD_SCALE,
       ..default()
     };
   // Water material.
@@ -265,7 +268,7 @@ fn setup(
 
   // light
   commands.spawn(PointLightBundle {
-    transform: Transform::from_xyz(4.0, PLANE_SIZE + 8.0, 4.0),
+    transform: Transform::from_xyz(0.65, 0.69, 0.3),
     point_light: PointLight {
       intensity: 1600.0, // lumens - roughly a 100W non-halogen incandescent bulb
       shadows_enabled: true,
@@ -276,7 +279,7 @@ fn setup(
 
   // camera
   let mut cam = commands.spawn((Camera3dBundle {
-    transform: Transform::from_xyz(0.0, PLANE_SIZE + 5.0, 40.0)
+    transform: Transform::from_xyz(0.0, -0.76, 4.0)
       .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
     ..default()
   },

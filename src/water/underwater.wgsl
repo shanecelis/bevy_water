@@ -57,8 +57,8 @@ fn fragment(
     let height = water_fn::get_wave_height(w_pos); // Water height from water_plane.
     // let height = caustic.g;
 
-        let no_light = vec4<f32>(0,0,0,1);
-        let light_color = vec4<f32>(1,1,1,1);
+    let no_light = vec4<f32>(0,0,0,1);
+    let light_color = vec4<f32>(1,1,1,1);
         // pbr_input.material.emissive = light_color * 10.;// * caustic.r * 100.0;// caustic.r * 1000.0;
     let depth = caustics_fn::distance_to_plane(in.world_position.xyz, material.water_plane) - height;
     var caustic = no_light;
@@ -78,7 +78,7 @@ fn fragment(
         // pbr_input.material.base_color = mix(pbr_input.material.base_color, material.water_color, saturate(abs(depth * 3.0)));// caustic.r * 1000.0;
         pbr_input.material.base_color = material.water_color;
         // pbr_input.material.base_color = mix(pbr_input.material.base_color, light_color, caustic.r * 4.0);// caustic.r * 1000.0;
-        pbr_input.material.emissive = mix(no_light, light_color, caustic.r * 100.0);// caustic.r * 1000.0;
+        pbr_input.material.emissive = mix(no_light, light_color, caustic.r * 500.0);// caustic.r * 1000.0;
 
     }
 
@@ -98,7 +98,7 @@ fn fragment(
     out.color = main_pass_post_lighting_processing(pbr_input, out.color);
 
     if (depth < 0.0) {
-        // out.color = abs(caustic);//vec4<f32>(caustic.r, caustic.r, caustic.r, 1.0);
+        // out.color = abs(caustic);
       // out.color = vec4<f32>(caustic.r, caustic.r, caustic.r, 1.0);
     }
     // XXX: This does not make any sense!
