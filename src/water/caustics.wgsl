@@ -21,6 +21,7 @@ struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) old_pos: vec3<f32>,
     @location(1) new_pos: vec3<f32>,
+    @location(2) height: f32,
 };
 
 @vertex
@@ -43,13 +44,15 @@ fn vertex(vertex: Vertex) -> VertexOutput {
     let refracted_light = refract(-material.light.xyz, material.plane.xyz, caustics_fn::IOR);
     let ray = refract(-material.light.xyz, normal, caustics_fn::IOR);
     let uv_pos = vec3<f32>(vertex.uv.x, 0.5, vertex.uv.y) * 2.0 - 1.0;
+    out.height = height;
     out.old_pos = caustics_fn::project(uv_pos, refracted_light, refracted_light, material.plane);
     out.new_pos = caustics_fn::project(uv_pos, ray, refracted_light, material.plane);
     // out.clip_position = vec4<f32>(out.new_pos.xz + refracted_light.xz / refracted_light.y, 0.0, 1.0);
     // out.clip_position = vec4<f32>(vertex.uv * 2.0 - 1.0, 0.0, 1.0);
     // out.clip_position = vec4<f32>(vertex.uv + 0. * vec2<f32>(-1.0, -1.0), 0.0, 1.0);
     //
-    out.clip_position = vec4<f32>(vertex.uv, 0.0, 1.0);
+    // out.clip_position = vec4<f32>(vertex.uv, 0.0, 1.0);
+    out.clip_position = vec4<f32>(vertex.uv - 0.1, 0.0, 1.0);
     // out.vertex.y *= -1;
 
 
@@ -65,6 +68,7 @@ struct FragmentInput {
     // @builtin(position) clip_position: vec4<f32>,
     @location(0) old_pos: vec3<f32>,
     @location(1) new_pos: vec3<f32>,
+    @location(2) height: f32,
 };
 
 @fragment
@@ -72,7 +76,7 @@ fn fragment(input: FragmentInput) -> @location(0) vec4<f32> {
     let old_area = length(dpdx(input.old_pos)) * length(dpdy(input.old_pos));
     let new_area = length(dpdx(input.new_pos)) * length(dpdy(input.new_pos));
     // return input.clip_position;
-    return vec4<f32>(old_area / new_area * 0.1, 0.0, 0.0, 1.0);
+    return vec4<f32>(old_area / new_area * 0.2, input.height, 0.0, 1.0);
     // return vec4<f32>(input.old_pos - input.new_pos, 1.0);
     // return vec4<f32>(abs(old_area - new_area) * 100.0, 0.0, 0.0, 1.0);
     // return vec4<f32>(abs(old_area - new_area) * 100000.0, 0.0, 0.0, 1.0);

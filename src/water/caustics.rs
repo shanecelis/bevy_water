@@ -52,12 +52,12 @@ struct CausticsFunctions(Handle<Shader>);
 
 impl Plugin for CausticsPlugin {
   fn build(&self, app: &mut App) {
-    app
-          .register_type::<CausticsMaterial>()
-          .register_type::<CausticsWaterMaterial>()
-          .register_type::<WaterBindMaterial>()
-          .register_type::<UnderwaterExtension>()
-          .register_type::<UnderwaterMaterial>();
+    // app
+    //       .register_type::<CausticsMaterial>()
+    //       .register_type::<CausticsWaterMaterial>()
+    //       .register_type::<WaterBindMaterial>()
+    //       .register_type::<UnderwaterExtension>()
+    //       .register_type::<UnderwaterMaterial>();
     embedded_asset!(app, "water", "caustics_functions.wgsl");
     embedded_asset!(app, "water", "caustics.wgsl");
     app.add_plugins(MaterialPlugin::<CausticsWaterMaterial>::default());

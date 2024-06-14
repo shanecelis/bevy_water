@@ -55,19 +55,26 @@ fn fragment(
     let w_pos = water_fn::uv_to_coord(water_uv);
     // let w_pos = water_uv;
     // let height = water_fn::get_wave_height(w_pos); // Water height from water_plane.
-    let height = water_fn::get_wave_height(w_pos); // Water height from water_plane.
+    // let height = water_fn::get_wave_height(w_pos); // Water height from water_plane.
+    let caustic = textureSample(caustics_texture, caustics_sampler, water_uv) / 4;
+    let height = caustic.g;
+
     let depth = caustics_fn::distance_to_plane(in.world_position.xyz, material.water_plane) - height;
+    // var caustic = vec4<f32>(1.0, 0, 0, 1);
     if (depth < 0.0) {
         // We're underwater.
         // pbr_input.material.base_color *= material.water_color;
         let refracted_light = refract(-material.light_dir.xyz, material.water_plane.xyz, caustics_fn::IOR);
 
         let plane_intersect = caustics_fn::line_plane_intercept(in.world_position.xyz, refracted_light, material.water_plane);
-        let caustic = textureSample(caustics_texture, caustics_sampler, in.uv);
+        // caustic = textureSample(caustics_texture, caustics_sampler, water_uv) / 4;
 
         /// I'd like to change the lighting intensity here.
         // pbr_input.material.base_color = mix(pbr_input.material.base_color, material.water_color, saturate(abs(depth * 3.0)));// caustic.r * 1000.0;
         pbr_input.material.base_color = material.water_color;
+        let light_color = vec4<f32>(1,1,1,1);
+        pbr_input.material.base_color = mix(pbr_input.material.base_color, light_color, caustic.r);// caustic.r * 1000.0;
+
     }
 
 #ifdef PREPASS_PIPELINE
@@ -85,7 +92,9 @@ fn fragment(
     // note this does not include fullscreen postprocessing effects like bloom.
     out.color = main_pass_post_lighting_processing(pbr_input, out.color);
 
-    // out.color = vec4<f32>(caustic.r, caustic.r, caustic.r, 1.0);
+    if (depth < 0.0) {
+      out.color = vec4<f32>(caustic.r, caustic.r, caustic.r, 1.0);
+    }
     // XXX: This does not make any sense!
     // out.color = vec4<f32>(water_uv.y % 1.0, 0., 0. * depth, 1.0);
     // out.color = vec4<f32>(w_pos.x % 1.0, 0., 0. * depth, 1.0);
