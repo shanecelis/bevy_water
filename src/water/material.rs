@@ -1,9 +1,9 @@
 use bevy::{
   asset::load_internal_asset,
-  pbr::{ExtendedMaterial, MaterialExtension, MaterialExtensionPipeline, MaterialExtensionKey},
+  pbr::{ExtendedMaterial, MaterialExtension, MaterialExtensionKey, MaterialExtensionPipeline},
   prelude::*,
   reflect::{std_traits::ReflectDefault, Reflect},
-  render::{render_asset::*, render_resource::*, mesh::MeshVertexBufferLayout},
+  render::{mesh::MeshVertexBufferLayout, render_asset::*, render_resource::*},
 };
 
 pub type StandardWaterMaterial = ExtendedMaterial<StandardMaterial, WaterMaterial>;
@@ -56,7 +56,7 @@ pub struct WaterMaterialUniform {
 }
 
 impl From<WaterMaterial> for WaterMaterialUniform {
-   fn from(material: WaterMaterial) -> Self {
+  fn from(material: WaterMaterial) -> Self {
     WaterMaterialUniform {
       amplitude: material.amplitude,
       clarity: material.clarity,
@@ -67,7 +67,7 @@ impl From<WaterMaterial> for WaterMaterialUniform {
       coord_offset: material.coord_offset,
       coord_scale: material.coord_scale,
     }
-   }
+  }
 }
 
 impl AsBindGroupShaderType<WaterMaterialUniform> for WaterMaterial {
@@ -136,15 +136,15 @@ impl MaterialExtension for WaterMaterial {
     water_fragment_shader()
   }
 
-fn specialize(
+  fn specialize(
     _pipeline: &MaterialExtensionPipeline,
     descriptor: &mut RenderPipelineDescriptor,
     _layout: &MeshVertexBufferLayout,
     _key: MaterialExtensionKey<Self>,
-) -> Result<(), SpecializedMeshPipelineError> {
+  ) -> Result<(), SpecializedMeshPipelineError> {
     descriptor.primitive.cull_mode = None;
     Ok(())
-}
+  }
 }
 
 #[derive(Default, Clone, Debug)]

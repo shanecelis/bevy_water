@@ -1,19 +1,20 @@
 use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 
+use crate::water::underwater::*;
 use crate::water::WaterMaterial;
 use bevy::pbr::{ExtendedMaterial, MaterialExtension, MaterialPipeline, MaterialPipelineKey};
 use bevy::render::{
-    mesh::MeshVertexBufferLayout,
+  mesh::MeshVertexBufferLayout,
   render_asset::RenderAssets,
   render_resource::{
     AsBindGroup, AsBindGroupError, AsBindGroupShaderType, BindGroupLayout, BindGroupLayoutEntry,
-    ShaderRef, ShaderType, UnpreparedBindGroup, RenderPipelineDescriptor,SpecializedMeshPipelineError
+    RenderPipelineDescriptor, ShaderRef, ShaderType, SpecializedMeshPipelineError,
+    UnpreparedBindGroup,
   },
   renderer::RenderDevice,
   texture::FallbackImage,
 };
-use crate::water::underwater::*;
 
 /// We bind all the same stuff as WaterMaterial, but we don't draw it like
 /// WaterMaterial.
@@ -47,8 +48,8 @@ pub struct CausticsPlugin;
 
 pub type CausticsWaterMaterial = ExtendedMaterial<CausticsMaterial, WaterBindMaterial>;
 
-#[derive(Resource)]
-struct CausticsFunctions(Handle<Shader>);
+#[derive(Resource, Deref, DerefMut)]
+struct ShaderLibs(Vec<Handle<Shader>>);
 
 impl Plugin for CausticsPlugin {
   fn build(&self, app: &mut App) {
@@ -65,9 +66,10 @@ impl Plugin for CausticsPlugin {
     app.add_plugins(MaterialPlugin::<UnderwaterMaterial>::default());
 
     let asset_server = app.world.resource::<AssetServer>();
-    let caustics_functions = asset_server.load::<Shader>("embedded://bevy_water/caustics_functions.wgsl");
+    let caustics_functions =
+      asset_server.load::<Shader>("embedded://bevy_water/caustics_functions.wgsl");
     assert!(caustics_functions.is_strong());
-    app.insert_resource(CausticsFunctions(caustics_functions));
+    app.insert_resource(ShaderLibs(vec![caustics_functions]));
   }
 }
 
@@ -102,15 +104,14 @@ impl Material for CausticsMaterial {
     "embedded://bevy_water/caustics.wgsl".into()
   }
 
-    fn specialize(
-        // _pipeline: &MaterialExtensionPipeline,
-        _pipeline: &MaterialPipeline<CausticsMaterial>,
-        descriptor: &mut RenderPipelineDescriptor,
-        _layout: &MeshVertexBufferLayout,
-        _key: MaterialPipelineKey<Self>,
-    ) -> Result<(), SpecializedMeshPipelineError> {
-        descriptor.primitive.cull_mode = None;
-        Ok(())
-    }
-
+  fn specialize(
+    // _pipeline: &MaterialExtensionPipeline,
+    _pipeline: &MaterialPipeline<CausticsMaterial>,
+    descriptor: &mut RenderPipelineDescriptor,
+    _layout: &MeshVertexBufferLayout,
+    _key: MaterialPipelineKey<Self>,
+  ) -> Result<(), SpecializedMeshPipelineError> {
+    descriptor.primitive.cull_mode = None;
+    Ok(())
+  }
 }

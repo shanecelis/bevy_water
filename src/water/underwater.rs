@@ -1,13 +1,10 @@
 use bevy::prelude::*;
 
-use crate::water::{WaterMaterialUniform};
+use crate::water::WaterMaterialUniform;
 use bevy::pbr::{ExtendedMaterial, MaterialExtension};
 use bevy::render::{
   render_asset::RenderAssets,
-  render_resource::{
-    AsBindGroup, AsBindGroupShaderType,
-    ShaderRef, ShaderType,
-  },
+  render_resource::{AsBindGroup, AsBindGroupShaderType, ShaderRef, ShaderType},
 };
 
 pub type UnderwaterMaterial = ExtendedMaterial<StandardMaterial, UnderwaterExtension>;
@@ -23,9 +20,9 @@ pub struct UnderwaterExtension {
 
   #[uniform(100)]
   pub water: WaterMaterialUniform,
-    #[texture(201)]
-    #[sampler(202)]
-    pub caustics_texture: Handle<Image>,
+  #[texture(201)]
+  #[sampler(202)]
+  pub caustics_texture: Handle<Image>,
   // pub light: Vec4,
 }
 

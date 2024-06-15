@@ -4,25 +4,25 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::pbr::NotShadowCaster;
 use bevy::render::{
-    render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, },
+  render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages},
   view::RenderLayers,
 };
 use bevy::{input::common_conditions, prelude::*};
 
-use bevy::pbr::{ExtendedMaterial};
+use bevy::pbr::ExtendedMaterial;
 #[cfg(feature = "atmosphere")]
 use bevy_spectator::*;
 
+use bevy_inspector_egui::quick; //::AssetInspectorPlugin;
+use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use bevy_water::caustics::*;
-use bevy_water::underwater::*;
 use bevy_water::material::{StandardWaterMaterial, WaterMaterial};
+use bevy_water::underwater::*;
 use bevy_water::*;
-use bevy_inspector_egui::quick;//::AssetInspectorPlugin;
-use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
 
 const PLANE_SIZE: f32 = 1.0;
 const PLANE_SUBDIVISIONS: u32 = 200;
-const COORD_SCALE: Vec2 =  Vec2::new(1.0, 1.0);
+const COORD_SCALE: Vec2 = Vec2::new(1.0, 1.0);
 
 fn main() {
   let mut app = App::new();
@@ -30,8 +30,8 @@ fn main() {
   app
     .add_plugins(DefaultPlugins)
     .insert_resource(WaterSettings {
-        amplitude: 0.1,
-        // amplitude: 10.0,
+      amplitude: 0.1,
+      // amplitude: 10.0,
       spawn_tiles: None,
       ..default()
     })
@@ -39,8 +39,6 @@ fn main() {
     .add_plugins(CausticsPlugin)
     // .add_plugins(AssetInspectorPlugin::<Image>::default())
     .add_plugins(quick::WorldInspectorPlugin::new())
-
-
     // Wireframe
     .add_plugins(WireframePlugin)
     .add_plugins(PanOrbitCameraPlugin)
@@ -98,22 +96,21 @@ fn setup_caustics(
   let water_material = WaterMaterial {
     amplitude: settings.amplitude,
 
-      coord_scale: COORD_SCALE,
+    coord_scale: COORD_SCALE,
     // coord_scale: Vec2::new(256.0, 256.0),
     ..default()
   };
 
+  let size = PLANE_SIZE;
+  let half_size = size / 2.0;
 
-        let size = PLANE_SIZE;
-        let half_size = size / 2.0;
-
-    // let white_dot = Image::new_fill(Extent3d { width: 2,
-    //                                            height: 2,
-    //                                            ..default() },
-    //                                 TextureDimension::D2,
-    //                                 &[255, 255, 255, 255],
-    //                                 TextureFormat::Rgba8UnormSrgb,
-    //                                 RenderAssetUsages::RENDER_WORLD);
+  // let white_dot = Image::new_fill(Extent3d { width: 2,
+  //                                            height: 2,
+  //                                            ..default() },
+  //                                 TextureDimension::D2,
+  //                                 &[255, 255, 255, 255],
+  //                                 TextureFormat::Rgba8UnormSrgb,
+  //                                 RenderAssetUsages::RENDER_WORLD);
   commands.spawn((
     Name::new("Ground"),
     MaterialMeshBundle {
@@ -123,36 +120,34 @@ fn setup_caustics(
       })),
       // material: ground_materials.add(Color::WHITE),
       material: underwater_materials.add(UnderwaterMaterial {
-          base: StandardMaterial {
-              base_color: Color::hex("f6dcbd").unwrap(),
-              // emissive: Color::WHITE,
-              // emissive_texture: Some(images.add(white_dot)),
-              ..default()
-          },
-          extension: UnderwaterExtension {
-              water: water_material.clone().into(),
-              water_world_to_uv: Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
-                  * Mat4::from_scale(Vec3::new(1.0/size, 1.0, 1.0/size)),
-              water_plane: Vec4::new(0.0, 1.0, 0.0, 0.0),
-              water_color: Color::hex("74ccf4").unwrap(),
-              light_dir: Vec4::new(0.65, 0.69, 0.3, 0.0),
-              caustics_texture: image_handle.clone(),
-          }
+        base: StandardMaterial {
+          base_color: Color::hex("f6dcbd").unwrap(),
+          // emissive: Color::WHITE,
+          // emissive_texture: Some(images.add(white_dot)),
+          ..default()
+        },
+        extension: UnderwaterExtension {
+          water: water_material.clone().into(),
+          water_world_to_uv: Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
+            * Mat4::from_scale(Vec3::new(1.0 / size, 1.0, 1.0 / size)),
+          water_plane: Vec4::new(0.0, 1.0, 0.0, 0.0),
+          water_color: Color::hex("74ccf4").unwrap(),
+          light_dir: Vec4::new(0.65, 0.69, 0.3, 0.0),
+          caustics_texture: image_handle.clone(),
+        },
       }),
-      transform: Transform::from_xyz(0.0, -1.0, 0.0)
-            // .with_rotation(Quat::from_rotation_z(-1.0))
-            // .with_rotation(Quat::from_euler(EulerRot::YZX, TAU / 4.0, -1.0, 0.0))
-            ,
+      transform: Transform::from_xyz(0.0, -1.0, 0.0), // .with_rotation(Quat::from_rotation_z(-1.0))
+                                                      // .with_rotation(Quat::from_euler(EulerRot::YZX, TAU / 4.0, -1.0, 0.0))
       ..default()
     },
     NotShadowCaster,
   ));
 
   let mesh: Handle<Mesh> = meshes.add(Mesh::from(shape::Plane {
-        size: PLANE_SIZE,
-      subdivisions: PLANE_SUBDIVISIONS * 5,
-        ..default()
-      }));
+    size: PLANE_SIZE,
+    subdivisions: PLANE_SUBDIVISIONS * 5,
+    ..default()
+  }));
   // let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: PLANE_SIZE });
   let caustics_pass_layer = RenderLayers::layer(1);
   commands.spawn((
@@ -220,15 +215,15 @@ fn setup(
   // let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: PLANE_SIZE });
 
   let mesh: Handle<Mesh> = meshes.add(Mesh::from(shape::Plane {
-        size: PLANE_SIZE,
-      subdivisions: PLANE_SUBDIVISIONS,
-        ..default()
-      }));
-  let water_material =  WaterMaterial {
-      // amplitude: settings.amplitude,
-      coord_scale: COORD_SCALE,
-      ..default()
-    };
+    size: PLANE_SIZE,
+    subdivisions: PLANE_SUBDIVISIONS,
+    ..default()
+  }));
+  let water_material = WaterMaterial {
+    // amplitude: settings.amplitude,
+    coord_scale: COORD_SCALE,
+    ..default()
+  };
   // Water material.
   let material = materials.add(StandardWaterMaterial {
     base: default(),
@@ -276,12 +271,13 @@ fn setup(
   });
 
   // camera
-  let mut cam = commands.spawn((Camera3dBundle {
-    transform: Transform::from_xyz(0.0, -0.76, 4.0)
-      .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
-    ..default()
-  },
-  PanOrbitCamera::default()));
+  let mut cam = commands.spawn((
+    Camera3dBundle {
+      transform: Transform::from_xyz(0.0, -0.76, 4.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+      ..default()
+    },
+    PanOrbitCamera::default(),
+  ));
 
   #[cfg(feature = "atmosphere")]
   cam.insert(Spectator);
@@ -297,48 +293,45 @@ fn setup(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+  use super::*;
 
-    #[test]
-    fn test_world_to_uv() {
-        let size = PLANE_SIZE;
-        let half_size = size / 2.0;
-        let max_point = Vec4::new(half_size, 0.0, half_size, 1.0);
-        let max_point_x = Vec4::new(half_size, 0.0, -half_size, 1.0);
-        let min_point = Vec4::new(-half_size, 0.0, -half_size, 1.0);
-        let mat = Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
-            * Mat4::from_scale(Vec3::new(1.0/size, 1.0, 1.0/size))
-            ;
-        assert_eq!(mat * max_point, Vec4::new(1.0, 0.0, 1.0, 1.0));
-        assert_eq!(mat * max_point_x, Vec4::new(1.0, 0.0, 0.0, 1.0));
-        assert_eq!(mat * min_point, Vec4::new(0.0, 0.0, 0.0, 1.0));
-    }
+  #[test]
+  fn test_world_to_uv() {
+    let size = PLANE_SIZE;
+    let half_size = size / 2.0;
+    let max_point = Vec4::new(half_size, 0.0, half_size, 1.0);
+    let max_point_x = Vec4::new(half_size, 0.0, -half_size, 1.0);
+    let min_point = Vec4::new(-half_size, 0.0, -half_size, 1.0);
+    let mat = Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
+      * Mat4::from_scale(Vec3::new(1.0 / size, 1.0, 1.0 / size));
+    assert_eq!(mat * max_point, Vec4::new(1.0, 0.0, 1.0, 1.0));
+    assert_eq!(mat * max_point_x, Vec4::new(1.0, 0.0, 0.0, 1.0));
+    assert_eq!(mat * min_point, Vec4::new(0.0, 0.0, 0.0, 1.0));
+  }
 
-    #[test]
-    fn test_world_to_uv_diffw() {
-        let size = PLANE_SIZE;
-        let half_size = size / 2.0;
-        let max_point = Vec4::new(half_size, 0.0, half_size, 5.0);
-        let max_point_x = Vec4::new(half_size, 0.0, -half_size, 4.0);
-        let min_point = Vec4::new(-half_size, 0.0, -half_size, -1.0);
-        let mat = Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
-            * Mat4::from_scale(Vec3::new(1.0/size, 1.0, 1.0/size))
-            ;
-        assert_eq!(mat * max_point, Vec4::new(1.0, 0.0, 1.0, 5.0));
-        assert_eq!(mat * max_point_x, Vec4::new(1.0, 0.0, 0.0, 4.0));
-        assert_eq!(mat * min_point, Vec4::new(0.0, 0.0, 0.0, -1.0));
-    }
+  #[test]
+  fn test_world_to_uv_diffw() {
+    let size = PLANE_SIZE;
+    let half_size = size / 2.0;
+    let max_point = Vec4::new(half_size, 0.0, half_size, 5.0);
+    let max_point_x = Vec4::new(half_size, 0.0, -half_size, 4.0);
+    let min_point = Vec4::new(-half_size, 0.0, -half_size, -1.0);
+    let mat = Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
+      * Mat4::from_scale(Vec3::new(1.0 / size, 1.0, 1.0 / size));
+    assert_eq!(mat * max_point, Vec4::new(1.0, 0.0, 1.0, 5.0));
+    assert_eq!(mat * max_point_x, Vec4::new(1.0, 0.0, 0.0, 4.0));
+    assert_eq!(mat * min_point, Vec4::new(0.0, 0.0, 0.0, -1.0));
+  }
 
-    #[test]
-    fn test_world_to_uv2() {
-        let size = PLANE_SIZE;
-        let half_size = size / 2.0;
-        let max_point = Vec4::new(half_size, 1.0, half_size, 1.0);
-        let min_point = Vec4::new(-half_size, 2.0, -half_size, 1.0);
-        let mat = Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
-            * Mat4::from_scale(Vec3::new(1.0/size, 1.0, 1.0/size))
-            ;
-        assert_eq!(mat * max_point, Vec4::new(1.0, 1.0, 1.0, 1.0));
-        assert_eq!(mat * min_point, Vec4::new(0.0, 2.0, 0.0, 1.0));
-    }
+  #[test]
+  fn test_world_to_uv2() {
+    let size = PLANE_SIZE;
+    let half_size = size / 2.0;
+    let max_point = Vec4::new(half_size, 1.0, half_size, 1.0);
+    let min_point = Vec4::new(-half_size, 2.0, -half_size, 1.0);
+    let mat = Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
+      * Mat4::from_scale(Vec3::new(1.0 / size, 1.0, 1.0 / size));
+    assert_eq!(mat * max_point, Vec4::new(1.0, 1.0, 1.0, 1.0));
+    assert_eq!(mat * min_point, Vec4::new(0.0, 2.0, 0.0, 1.0));
+  }
 }

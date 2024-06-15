@@ -19,7 +19,7 @@ fn main() {
   app
     .add_plugins(DefaultPlugins)
     .insert_resource(WaterSettings {
-        amplitude: 1.0,
+      amplitude: 1.0,
       spawn_tiles: None,
       ..default()
     })
@@ -67,10 +67,10 @@ fn setup(
   // Mesh for water.
   // let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: CUBE_SIZE });
   let mesh: Handle<Mesh> = meshes.add(Mesh::from(shape::Plane {
-        size: CUBE_SIZE,
-      subdivisions: 10,
-        ..default()
-      }));
+    size: CUBE_SIZE,
+    subdivisions: 10,
+    ..default()
+  }));
   // Water material.
   let material = materials.add(StandardWaterMaterial {
     base: default(),
