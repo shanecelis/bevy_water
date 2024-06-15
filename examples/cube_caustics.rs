@@ -4,13 +4,12 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::pbr::NotShadowCaster;
 use bevy::render::{
-    render_asset::RenderAssetUsages,
-  render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, },
+    render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, },
   view::RenderLayers,
 };
 use bevy::{input::common_conditions, prelude::*};
 
-use bevy::pbr::{ExtendedMaterial, MaterialExtension};
+use bevy::pbr::{ExtendedMaterial};
 #[cfg(feature = "atmosphere")]
 use bevy_spectator::*;
 
@@ -112,7 +111,7 @@ fn setup_caustics(
   let underwater_material = underwater_materials.add(UnderwaterMaterial {
           base: StandardMaterial {
               // base_color: Color::hex("f6dcbd").unwrap(),
-              base_color_texture: Some(asset_server.load("textures/tiles.jpg")),
+              base_color_texture: Some(asset_server.load("textures/tiles2.jpg")),
               // emissive: Color::WHITE,
               // emissive_texture: Some(images.add(white_dot)),
               ..default()
@@ -122,7 +121,7 @@ fn setup_caustics(
               water_world_to_uv: Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
                   * Mat4::from_scale(Vec3::new(1.0/size, 1.0, 1.0/size)),
               water_plane: WATER_PLANE,
-              water_color: Color::hex("74ccf4").unwrap().into(),
+              water_color: Color::hex("74ccf4").unwrap(),
               light_dir: Vec4::new(0.65, 0.69, 0.3, 0.0),
               caustics_texture: image_handle.clone(),
           }
@@ -267,7 +266,7 @@ fn setup(
   settings: Res<WaterSettings>,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardWaterMaterial>>,
-  mut ground_materials: ResMut<Assets<StandardMaterial>>,
+  ground_materials: ResMut<Assets<StandardMaterial>>,
 ) {
   // Mesh for water.
   let mesh: Handle<Mesh> = meshes.add(Mesh::from(shape::Plane {

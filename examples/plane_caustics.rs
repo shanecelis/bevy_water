@@ -4,13 +4,12 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::pbr::NotShadowCaster;
 use bevy::render::{
-    render_asset::RenderAssetUsages,
-  render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, },
+    render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, },
   view::RenderLayers,
 };
 use bevy::{input::common_conditions, prelude::*};
 
-use bevy::pbr::{ExtendedMaterial, MaterialExtension};
+use bevy::pbr::{ExtendedMaterial};
 #[cfg(feature = "atmosphere")]
 use bevy_spectator::*;
 
@@ -20,7 +19,6 @@ use bevy_water::material::{StandardWaterMaterial, WaterMaterial};
 use bevy_water::*;
 use bevy_inspector_egui::quick;//::AssetInspectorPlugin;
 use bevy_panorbit_camera::{PanOrbitCameraPlugin, PanOrbitCamera};
-use std::f32::consts::TAU;
 
 const PLANE_SIZE: f32 = 1.0;
 const PLANE_SUBDIVISIONS: u32 = 200;
@@ -136,7 +134,7 @@ fn setup_caustics(
               water_world_to_uv: Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
                   * Mat4::from_scale(Vec3::new(1.0/size, 1.0, 1.0/size)),
               water_plane: Vec4::new(0.0, 1.0, 0.0, 0.0),
-              water_color: Color::hex("74ccf4").unwrap().into(),
+              water_color: Color::hex("74ccf4").unwrap(),
               light_dir: Vec4::new(0.65, 0.69, 0.3, 0.0),
               caustics_texture: image_handle.clone(),
           }
@@ -216,7 +214,7 @@ fn setup(
   settings: Res<WaterSettings>,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardWaterMaterial>>,
-  mut ground_materials: ResMut<Assets<StandardMaterial>>,
+  ground_materials: ResMut<Assets<StandardMaterial>>,
 ) {
   // Mesh for water.
   // let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: PLANE_SIZE });

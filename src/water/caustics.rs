@@ -2,7 +2,7 @@ use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 
 use crate::water::WaterMaterial;
-use bevy::pbr::{ExtendedMaterial, MaterialExtension, MaterialExtensionPipeline, MaterialExtensionKey, MaterialPipeline, MaterialPipelineKey};
+use bevy::pbr::{ExtendedMaterial, MaterialExtension, MaterialPipeline, MaterialPipelineKey};
 use bevy::render::{
     mesh::MeshVertexBufferLayout,
   render_asset::RenderAssets,

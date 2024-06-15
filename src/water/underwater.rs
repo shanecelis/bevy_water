@@ -1,16 +1,13 @@
-use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 
-use crate::water::{WaterMaterial, WaterMaterialUniform};
+use crate::water::{WaterMaterialUniform};
 use bevy::pbr::{ExtendedMaterial, MaterialExtension};
 use bevy::render::{
   render_asset::RenderAssets,
   render_resource::{
-    AsBindGroup, AsBindGroupError, AsBindGroupShaderType, BindGroupLayout, BindGroupLayoutEntry,
-    ShaderRef, ShaderType, UnpreparedBindGroup,
+    AsBindGroup, AsBindGroupShaderType,
+    ShaderRef, ShaderType,
   },
-  renderer::RenderDevice,
-  texture::FallbackImage,
 };
 
 pub type UnderwaterMaterial = ExtendedMaterial<StandardMaterial, UnderwaterExtension>;
