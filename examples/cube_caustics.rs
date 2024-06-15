@@ -25,6 +25,7 @@ use std::f32::consts::TAU;
 const PLANE_SIZE: f32 = 1.0;
 const PLANE_SUBDIVISIONS: u32 = 200;
 const COORD_SCALE: Vec2 =  Vec2::new(1.0, 1.0);
+const WATER_PLANE: Vec4 = Vec4::new(0., 1., 0., 0.44);
 
 fn main() {
   let mut app = App::new();
@@ -39,7 +40,6 @@ fn main() {
     })
     .add_plugins(WaterPlugin)
     .add_plugins(CausticsPlugin)
-    // .add_plugins(AssetInspectorPlugin::<Image>::default())
     .add_plugins(quick::WorldInspectorPlugin::new())
 
 
@@ -65,6 +65,7 @@ fn setup_caustics(
   mut caustics_materials: ResMut<Assets<CausticsWaterMaterial>>,
   mut underwater_materials: ResMut<Assets<UnderwaterMaterial>>,
   mut images: ResMut<Assets<Image>>,
+    asset_server: Res<AssetServer>,
 ) {
   // let size = Extent3d {
   //   width: 512,
@@ -101,7 +102,6 @@ fn setup_caustics(
     amplitude: settings.amplitude,
 
       coord_scale: COORD_SCALE,
-    // coord_scale: Vec2::new(256.0, 256.0),
     ..default()
   };
 
@@ -109,17 +109,10 @@ fn setup_caustics(
         let size = PLANE_SIZE;
         let half_size = size / 2.0;
 
-    // let white_dot = Image::new_fill(Extent3d { width: 2,
-    //                                            height: 2,
-    //                                            ..default() },
-    //                                 TextureDimension::D2,
-    //                                 &[255, 255, 255, 255],
-    //                                 TextureFormat::Rgba8UnormSrgb,
-    //                                 RenderAssetUsages::RENDER_WORLD);
-    //
   let underwater_material = underwater_materials.add(UnderwaterMaterial {
           base: StandardMaterial {
-              base_color: Color::hex("f6dcbd").unwrap(),
+              // base_color: Color::hex("f6dcbd").unwrap(),
+              base_color_texture: Some(asset_server.load("textures/tiles.jpg")),
               // emissive: Color::WHITE,
               // emissive_texture: Some(images.add(white_dot)),
               ..default()
@@ -128,7 +121,7 @@ fn setup_caustics(
               water: water_material.clone().into(),
               water_world_to_uv: Mat4::from_translation(Vec3::new(0.5, 0.0, 0.5))
                   * Mat4::from_scale(Vec3::new(1.0/size, 1.0, 1.0/size)),
-              water_plane: Vec4::new(0.0, 1.0, 0.0, 0.0),
+              water_plane: WATER_PLANE,
               water_color: Color::hex("74ccf4").unwrap().into(),
               light_dir: Vec4::new(0.65, 0.69, 0.3, 0.0),
               caustics_texture: image_handle.clone(),
@@ -142,9 +135,21 @@ fn setup_caustics(
         ..default()
       })),
       material: underwater_material.clone(),
-      transform: Transform::from_xyz(0.0, -1.0, 0.0)
-            // .with_rotation(Quat::from_rotation_z(-TAU/4.0))
-            // .with_rotation(Quat::from_euler(EulerRot::YZX, TAU / 4.0, -1.0, 0.0))
+      ..default()
+    },
+    NotShadowCaster,
+  ));
+
+  commands.spawn((
+    Name::new("Wall 1"),
+    MaterialMeshBundle {
+      mesh: meshes.add(Mesh::from(shape::Plane {
+        size: PLANE_SIZE,
+        ..default()
+      })),
+      material: underwater_material.clone(),
+      transform: Transform::from_xyz(-0.5, 0.5, 0.0)
+            .with_rotation(Quat::from_rotation_z(-TAU/4.0))
             ,
       ..default()
     },
@@ -152,18 +157,47 @@ fn setup_caustics(
   ));
 
   commands.spawn((
-    Name::new("Ground"),
+    Name::new("Wall 2"),
     MaterialMeshBundle {
       mesh: meshes.add(Mesh::from(shape::Plane {
         size: PLANE_SIZE,
         ..default()
       })),
-      // material: ground_materials.add(Color::WHITE),
       material: underwater_material.clone(),
-      transform: Transform::from_xyz(-0.5, -0.5, 0.0)
-            .with_rotation(Quat::from_rotation_z(-TAU/4.0))
-            // .with_rotation(Quat::from_rotation_z(-1.0))
-            // .with_rotation(Quat::from_euler(EulerRot::YZX, TAU / 4.0, -1.0, 0.0))
+      transform: Transform::from_xyz(0.5, 0.5, 0.0)
+            .with_rotation(Quat::from_rotation_z(TAU/4.0))
+            ,
+      ..default()
+    },
+    NotShadowCaster,
+  ));
+
+  commands.spawn((
+    Name::new("Wall 3"),
+    MaterialMeshBundle {
+      mesh: meshes.add(Mesh::from(shape::Plane {
+        size: PLANE_SIZE,
+        ..default()
+      })),
+      material: underwater_material.clone(),
+      transform: Transform::from_xyz(0.0, 0.5, 0.5)
+            .with_rotation(Quat::from_rotation_x(-TAU/4.0))
+            ,
+      ..default()
+    },
+    NotShadowCaster,
+  ));
+
+  commands.spawn((
+    Name::new("Wall 4"),
+    MaterialMeshBundle {
+      mesh: meshes.add(Mesh::from(shape::Plane {
+        size: PLANE_SIZE,
+        ..default()
+      })),
+      material: underwater_material.clone(),
+      transform: Transform::from_xyz(0.0, 0.5, -0.5)
+            .with_rotation(Quat::from_rotation_x(TAU/4.0))
             ,
       ..default()
     },
@@ -201,11 +235,8 @@ fn setup_caustics(
         // render before the "main pass" camera
         order: -1,
         target: image_handle.clone().into(),
-        // clear_color: Color::WHITE.into(),
         ..default()
       },
-      // transform: Transform::from_translation(Vec3::new(0.0, 0.0, 15.0)),
-      //     .looking_at(Vec3::ZERO, Vec3::Y),
       ..default()
     },
     caustics_pass_layer,
@@ -239,8 +270,6 @@ fn setup(
   mut ground_materials: ResMut<Assets<StandardMaterial>>,
 ) {
   // Mesh for water.
-  // let mesh: Handle<Mesh> = meshes.add(shape::Cube { size: PLANE_SIZE });
-
   let mesh: Handle<Mesh> = meshes.add(Mesh::from(shape::Plane {
         size: PLANE_SIZE,
       subdivisions: PLANE_SUBDIVISIONS,
@@ -262,29 +291,11 @@ fn setup(
     MaterialMeshBundle {
       mesh: mesh.clone(),
       material,
-      transform: Transform::from_xyz(0.0, 0.0, 0.0),
+      transform: Transform::from_xyz(0.0, WATER_PLANE.w, 0.0),
       ..default()
     },
-    // caustics_materials.add(CausticsMaterial {
-    //     plane: Vec4::Y,
-    //     light: -Vec4::Y,
-    // }),
     NotShadowCaster,
   ));
-
-  // commands.spawn((
-  //   Name::new("Ground"),
-  //   MaterialMeshBundle {
-  //     mesh: meshes.add(Mesh::from(shape::Plane {
-  //       size: PLANE_SIZE,
-  //       ..default()
-  //     })),
-  //     material: ground_materials.add(Color::WHITE),
-  //     transform: Transform::from_xyz(0.0, -10.0, 0.0),
-  //     ..default()
-  //   },
-  //   NotShadowCaster,
-  // ));
 
   // light
   commands.spawn(PointLightBundle {
