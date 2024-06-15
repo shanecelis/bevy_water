@@ -116,8 +116,15 @@ fn setup_caustics(
     //                                 &[255, 255, 255, 255],
     //                                 TextureFormat::Rgba8UnormSrgb,
     //                                 RenderAssetUsages::RENDER_WORLD);
-    //
-  let underwater_material = underwater_materials.add(UnderwaterMaterial {
+  commands.spawn((
+    Name::new("Ground"),
+    MaterialMeshBundle {
+      mesh: meshes.add(Mesh::from(shape::Plane {
+        size: PLANE_SIZE,
+        ..default()
+      })),
+      // material: ground_materials.add(Color::WHITE),
+      material: underwater_materials.add(UnderwaterMaterial {
           base: StandardMaterial {
               base_color: Color::hex("f6dcbd").unwrap(),
               // emissive: Color::WHITE,
@@ -133,35 +140,8 @@ fn setup_caustics(
               light_dir: Vec4::new(0.65, 0.69, 0.3, 0.0),
               caustics_texture: image_handle.clone(),
           }
-      });
-  commands.spawn((
-    Name::new("Ground"),
-    MaterialMeshBundle {
-      mesh: meshes.add(Mesh::from(shape::Plane {
-        size: PLANE_SIZE,
-        ..default()
-      })),
-      material: underwater_material.clone(),
+      }),
       transform: Transform::from_xyz(0.0, -1.0, 0.0)
-            // .with_rotation(Quat::from_rotation_z(-TAU/4.0))
-            // .with_rotation(Quat::from_euler(EulerRot::YZX, TAU / 4.0, -1.0, 0.0))
-            ,
-      ..default()
-    },
-    NotShadowCaster,
-  ));
-
-  commands.spawn((
-    Name::new("Ground"),
-    MaterialMeshBundle {
-      mesh: meshes.add(Mesh::from(shape::Plane {
-        size: PLANE_SIZE,
-        ..default()
-      })),
-      // material: ground_materials.add(Color::WHITE),
-      material: underwater_material.clone(),
-      transform: Transform::from_xyz(-0.5, -0.5, 0.0)
-            .with_rotation(Quat::from_rotation_z(-TAU/4.0))
             // .with_rotation(Quat::from_rotation_z(-1.0))
             // .with_rotation(Quat::from_euler(EulerRot::YZX, TAU / 4.0, -1.0, 0.0))
             ,
