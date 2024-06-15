@@ -76,9 +76,9 @@ fn fragment(
 
         /// I'd like to change the lighting intensity here.
         // pbr_input.material.base_color = mix(pbr_input.material.base_color, material.water_color, saturate(abs(depth * 3.0)));// caustic.r * 1000.0;
-        // pbr_input.material.base_color = material.water_color;
+        pbr_input.material.base_color = material.water_color;
         // pbr_input.material.base_color = mix(pbr_input.material.base_color, light_color, caustic.r * 4.0);// caustic.r * 1000.0;
-        pbr_input.material.emissive = mix(no_light, light_color, caustic.r * 500.0);// caustic.r * 1000.0;
+        // pbr_input.material.emissive = mix(no_light, light_color, caustic.r * 500.0);// caustic.r * 1000.0;
 
     }
 

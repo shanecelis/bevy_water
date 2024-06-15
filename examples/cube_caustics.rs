@@ -108,7 +108,7 @@ fn setup_caustics(
   let underwater_material = underwater_materials.add(UnderwaterMaterial {
     base: StandardMaterial {
       // base_color: Color::hex("f6dcbd").unwrap(),
-      base_color_texture: Some(asset_server.load("textures/tiles2.jpg")),
+      base_color_texture: Some(asset_server.load("textures/tiles.jpg")),
       // emissive: Color::WHITE,
       // emissive_texture: Some(images.add(white_dot)),
       ..default()
@@ -267,7 +267,7 @@ fn setup(
     ..default()
   }));
   let water_material = WaterMaterial {
-    // amplitude: settings.amplitude,
+    amplitude: settings.amplitude,
     coord_scale: COORD_SCALE,
     ..default()
   };

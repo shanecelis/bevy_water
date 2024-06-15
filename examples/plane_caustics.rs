@@ -137,7 +137,7 @@ fn setup_caustics(
         },
       }),
       transform: Transform::from_xyz(0.0, -1.0, 0.0), // .with_rotation(Quat::from_rotation_z(-1.0))
-                                                      // .with_rotation(Quat::from_euler(EulerRot::YZX, TAU / 4.0, -1.0, 0.0))
+      // .with_rotation(Quat::from_euler(EulerRot::YZX, TAU / 4.0, -1.0, 0.0))
       ..default()
     },
     NotShadowCaster,
