@@ -8,6 +8,7 @@ description = "Dynamic ocean material for Bevy."
 keywords = ["water", "ocean", "waves", "bevy"]
 repository = "https://github.com/Neopallium/bevy_water"
 homepage = "https://github.com/Neopallium/bevy_water"
+resolver = "2"
 
 exclude = [
 	"examples/*",
@@ -17,7 +18,8 @@ exclude = [
 ]
 
 [features]
-default = ["webgl2", "embed_shaders", "depth_prepass"]
+# default = ["webgl2", "embed_shaders", "depth_prepass"]
+default = ["embed_shaders", "depth_prepass"]
 
 # Embed the shaders at compile-time.
 embed_shaders = []
@@ -52,8 +54,10 @@ webgpu = [ ]
 anyhow = "1.0"
 
 bevy = { version = "0.13.0", default-features = false, features = ["bevy_asset", "bevy_render", "bevy_pbr"] }
+# bevy = { path = "../bevy", default-features = false, features = ["bevy_asset", "bevy_render", "bevy_pbr"] }
 
 [dev-dependencies]
+# bevy = { path = "../bevy", default-features = false , features = [
 bevy = { version = "0.13.0", default-features = false , features = [
   "animation",
   "bevy_asset",
@@ -80,8 +84,11 @@ bevy = { version = "0.13.0", default-features = false , features = [
   "tonemapping_luts",
   "default_font",
 ] }
-bevy-inspector-egui = { version = "0.23" }
+# bevy-inspector-egui = { version = "0.23" }
 bevy_atmosphere = { version = "0.9" }
 #bevy_prototype_debug_lines = { version = "0.11", features = ["3d"] }
 bevy_spectator = { version = "0.5" }
-bevy_panorbit_camera = { version = "0.16" }
+bevy_panorbit_camera = { version = "0.18" }
+
+[patch.crates-io]
+bevy = { path = "../bevy" }

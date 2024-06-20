@@ -20,9 +20,9 @@ fn wave(p: vec2<f32>) -> f32 {
 // fn get_wave_height(p: vec2<f32>) -> f32 {
 //   let time = globals.time / 2.0;
 //   var d = wave((p + time) * 0.4) * 0.3;
-//   // d = d + wave((p - time) * 0.3) * 0.3;
-//   // d = d + wave((p + time) * 0.5) * 0.2;
-//   // d = d + wave((p - time) * 0.6) * 0.2;
+//   d = d + wave((p - time) * 0.3) * 0.3;
+//   d = d + wave((p + time) * 0.5) * 0.2;
+//   d = d + wave((p - time) * 0.6) * 0.2;
 //   return material.amplitude * d;
 // }
 
@@ -38,7 +38,7 @@ fn uv_to_coord(uv: vec2<f32>) -> vec2<f32> {
   return material.coord_offset + (uv * material.coord_scale);
 }
 
-const FREQ: f32 = 16.0;
+const FREQ: f32 = 8.0;
 
 fn get_wave_height(p: vec2<f32>) -> f32 {
     let time = globals.time;

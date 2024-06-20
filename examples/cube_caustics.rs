@@ -4,6 +4,7 @@ use bevy::core_pipeline::prepass::DepthPrepass;
 use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::pbr::NotShadowCaster;
 use bevy::render::{
+    render_asset::RenderAssetUsages,
   render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages},
   view::RenderLayers,
 };
@@ -13,7 +14,7 @@ use bevy::pbr::ExtendedMaterial;
 #[cfg(feature = "atmosphere")]
 use bevy_spectator::*;
 
-use bevy_inspector_egui::quick; //::AssetInspectorPlugin;
+// use bevy_inspector_egui::quick; //::AssetInspectorPlugin;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use bevy_water::caustics::*;
 use bevy_water::material::{StandardWaterMaterial, WaterMaterial};
@@ -21,10 +22,11 @@ use bevy_water::underwater::*;
 use bevy_water::*;
 use std::f32::consts::TAU;
 
-const PLANE_SIZE: f32 = 1.0;
+const PLANE_SIZE: f32 = 2.0;
 const PLANE_SUBDIVISIONS: u32 = 200;
 const COORD_SCALE: Vec2 = Vec2::new(1.0, 1.0);
 const WATER_PLANE: Vec4 = Vec4::new(0., 1., 0., 0.44);
+const LIGHT: Vec4 = Vec4::new(0.66, 0.69, 0.3, 0.0);
 
 fn main() {
   let mut app = App::new();
@@ -32,6 +34,7 @@ fn main() {
   app
     .add_plugins(DefaultPlugins)
     .insert_resource(WaterSettings {
+      // amplitude: 0.5,
       amplitude: 0.1,
       // amplitude: 10.0,
       spawn_tiles: None,
@@ -39,14 +42,15 @@ fn main() {
     })
     .add_plugins(WaterPlugin)
     .add_plugins(CausticsPlugin)
-    .add_plugins(quick::WorldInspectorPlugin::new())
+    // .add_plugins(quick::WorldInspectorPlugin::new())
     // Wireframe
     .add_plugins(WireframePlugin)
     .add_plugins(PanOrbitCameraPlugin)
     .add_systems(Startup, (setup, setup_caustics))
     .add_systems(
       Update,
-      toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::KeyR)),
+      (toggle_wireframe.run_if(common_conditions::input_just_pressed(KeyCode::KeyR)),
+        toggle_debug_visibility),
     );
 
   #[cfg(feature = "atmosphere")]
@@ -89,6 +93,7 @@ fn setup_caustics(
         | TextureUsages::RENDER_ATTACHMENT,
       view_formats: &[],
     },
+      asset_usage: RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
     ..default()
   };
   image.resize(size);
@@ -119,10 +124,13 @@ fn setup_caustics(
         * Mat4::from_scale(Vec3::new(1.0 / size, 1.0, 1.0 / size)),
       water_plane: WATER_PLANE,
       water_color: Color::hex("74ccf4").unwrap(),
-      light_dir: Vec4::new(0.65, 0.69, 0.3, 0.0),
+      light_dir: LIGHT,
       caustics_texture: image_handle.clone(),
     },
   });
+
+    let plane_half_size = PLANE_SIZE / 2.0;
+    let mut ground_height = -plane_half_size;
   commands.spawn((
     Name::new("Ground"),
     MaterialMeshBundle {
@@ -131,11 +139,14 @@ fn setup_caustics(
         ..default()
       })),
       material: underwater_material.clone(),
+      transform: Transform::from_xyz(0.0, ground_height, 0.0),
       ..default()
     },
     NotShadowCaster,
   ));
 
+
+    ground_height = 0.0;
   commands.spawn((
     Name::new("Wall 1"),
     MaterialMeshBundle {
@@ -144,7 +155,7 @@ fn setup_caustics(
         ..default()
       })),
       material: underwater_material.clone(),
-      transform: Transform::from_xyz(-0.5, 0.5, 0.0)
+      transform: Transform::from_xyz(-plane_half_size, ground_height, 0.0)
         .with_rotation(Quat::from_rotation_z(-TAU / 4.0)),
       ..default()
     },
@@ -159,7 +170,7 @@ fn setup_caustics(
         ..default()
       })),
       material: underwater_material.clone(),
-      transform: Transform::from_xyz(0.5, 0.5, 0.0).with_rotation(Quat::from_rotation_z(TAU / 4.0)),
+      transform: Transform::from_xyz(plane_half_size, ground_height, 0.0).with_rotation(Quat::from_rotation_z(TAU / 4.0)),
       ..default()
     },
     NotShadowCaster,
@@ -173,7 +184,7 @@ fn setup_caustics(
         ..default()
       })),
       material: underwater_material.clone(),
-      transform: Transform::from_xyz(0.0, 0.5, 0.5)
+      transform: Transform::from_xyz(0.0, ground_height, plane_half_size)
         .with_rotation(Quat::from_rotation_x(-TAU / 4.0)),
       ..default()
     },
@@ -188,7 +199,7 @@ fn setup_caustics(
         ..default()
       })),
       material: underwater_material.clone(),
-      transform: Transform::from_xyz(0.0, 0.5, -0.5)
+      transform: Transform::from_xyz(0.0, ground_height, -plane_half_size)
         .with_rotation(Quat::from_rotation_x(TAU / 4.0)),
       ..default()
     },
@@ -208,8 +219,8 @@ fn setup_caustics(
       mesh,
       material: caustics_materials.add(ExtendedMaterial {
         base: CausticsMaterial {
-          plane: Vec4::new(0.0, 1.0, 0.0, -10.0), // XXX: Why do this when you could just add max_depth = -10?
-          light: Vec4::new(4.0, PLANE_SIZE + 8.0, 4.0, 0.0),
+          plane: Vec4::new(0.0, 1.0, 0.0, -1.0), // XXX: Why do this when you could just add max_depth = -10?
+          light: LIGHT,
         },
         extension: WaterBindMaterial(water_material),
       }),
@@ -232,6 +243,40 @@ fn setup_caustics(
     },
     caustics_pass_layer,
   ));
+
+
+    commands.spawn(Camera2dBundle {
+        camera: Camera {
+            order: 1,
+            ..default()
+        },
+        ..default()
+    });
+    commands.spawn((SpriteBundle {
+        texture: image_handle,
+        visibility: Visibility::Hidden,
+        ..default()
+    }, Debug));
+}
+
+#[derive(Component)]
+struct Debug;
+
+fn toggle_debug_visibility(mut query: Query<&mut Visibility, With<Debug>>,
+
+    keyboard: Res<ButtonInput<KeyCode>>,
+                           ) {
+
+    if keyboard.just_pressed(KeyCode::Space) {
+        info!("toggling");
+        for mut visibility in query.iter_mut() {
+            *visibility = match *visibility {
+                Visibility::Visible => Visibility::Hidden,
+                Visibility::Hidden => Visibility::Visible,
+                Visibility::Inherited => Visibility::Visible,
+            }
+        }
+    }
 }
 
 fn toggle_wireframe(
@@ -290,7 +335,7 @@ fn setup(
 
   // light
   commands.spawn(PointLightBundle {
-    transform: Transform::from_xyz(0.65, 0.69, 0.3),
+    transform: Transform::from_translation(LIGHT.xyz()),
     point_light: PointLight {
       intensity: 1600.0, // lumens - roughly a 100W non-halogen incandescent bulb
       shadows_enabled: true,

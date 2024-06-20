@@ -70,15 +70,35 @@ fn fragment(
 
         let plane_intersect = caustics_fn::line_plane_intercept(in.world_position.xyz, refracted_light, material.water_plane);
 
+        pbr_input.material.base_color *= caustics_fn::underwater_color;//material.water_color;
         let caustic_uv = (material.water_world_to_uv * vec4<f32>(plane_intersect, 1.0)).xz;
+        if (caustic_uv.x >= 0. && caustic_uv.x < 1. && caustic_uv.y >= 0. && caustic_uv.y < 1.) {
         caustic = textureSample(caustics_texture, caustics_sampler, caustic_uv);
         // caustic = textureSample(caustics_texture, caustics_sampler, water_uv);
+        let area_ratio = caustic.r / 0.5;
+        // let area_ratio = caustic.r;
 
         /// I'd like to change the lighting intensity here.
         // pbr_input.material.base_color = mix(pbr_input.material.base_color, material.water_color, saturate(abs(depth * 3.0)));// caustic.r * 1000.0;
-        pbr_input.material.base_color = material.water_color;
         // pbr_input.material.base_color = mix(pbr_input.material.base_color, light_color, caustic.r * 4.0);// caustic.r * 1000.0;
-        // pbr_input.material.emissive = mix(no_light, light_color, caustic.r * 500.0);// caustic.r * 1000.0;
+        //
+        // The problem here is emissive makes it lighter, but caustic.r > 1 is lighter, and caustic.r < 1 is darker.
+        pbr_input.attenuation = vec3<f32>(max(area_ratio * 10, 0.9));
+        if (area_ratio > 1) {
+            //
+            //pbr_input.material.emissive = mix(no_light, light_color, (area_ratio - 1) * 50);
+            // pbr_input.material.emissive = 100.0 * light_color;//mix(-light_color * 1000, light_color, (caustic.r) * 10000.0);// caustic.r * 1000.0;
+
+
+        } else {
+            // pbr_input.material.base_color *= (1 - area_ratio) * 10; // looks like it brightens everything.
+            //pbr_input.material.base_color *= pow(area_ratio, 0.2);
+
+            // pbr_input.material.emissive = light_color * -1;
+
+        }
+        }
+        //
 
     }
 
