@@ -13,7 +13,7 @@ use bevy::pbr::ExtendedMaterial;
 #[cfg(feature = "atmosphere")]
 use bevy_spectator::*;
 
-use bevy_inspector_egui::quick; //::AssetInspectorPlugin;
+// use bevy_inspector_egui::quick; //::AssetInspectorPlugin;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use bevy_water::caustics::*;
 use bevy_water::material::{StandardWaterMaterial, WaterMaterial};
@@ -38,7 +38,7 @@ fn main() {
     .add_plugins(WaterPlugin)
     .add_plugins(CausticsPlugin)
     // .add_plugins(AssetInspectorPlugin::<Image>::default())
-    .add_plugins(quick::WorldInspectorPlugin::new())
+    // .add_plugins(quick::WorldInspectorPlugin::new())
     // Wireframe
     .add_plugins(WireframePlugin)
     .add_plugins(PanOrbitCameraPlugin)

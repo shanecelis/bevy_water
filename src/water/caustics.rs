@@ -2,6 +2,7 @@ use bevy::asset::embedded_asset;
 use bevy::prelude::*;
 
 use crate::water::underwater::*;
+use crate::water::caustics_parallax;
 use crate::water::WaterMaterial;
 use bevy::pbr::{ExtendedMaterial, MaterialExtension, MaterialPipeline, MaterialPipelineKey};
 use bevy::render::{
@@ -60,16 +61,23 @@ impl Plugin for CausticsPlugin {
     //       .register_type::<UnderwaterExtension>()
     //       .register_type::<UnderwaterMaterial>();
     embedded_asset!(app, "water", "caustics_functions.wgsl");
+    embedded_asset!(app, "water", "caustics_binding.wgsl");
     embedded_asset!(app, "water", "caustics.wgsl");
+    embedded_asset!(app, "water", "caustics_vertex.wgsl");
+    embedded_asset!(app, "water", "caustics_fragment.wgsl");
     app.add_plugins(MaterialPlugin::<CausticsWaterMaterial>::default());
+    app.add_plugins(MaterialPlugin::<caustics_parallax::CausticsParallaxMaterial> {
+        prepass_enabled: false,
+        ..default()
+    });
     embedded_asset!(app, "water", "underwater.wgsl");
     app.add_plugins(MaterialPlugin::<UnderwaterMaterial>::default());
 
     let asset_server = app.world.resource::<AssetServer>();
-    let caustics_functions =
-      asset_server.load::<Shader>("embedded://bevy_water/caustics_functions.wgsl");
-    assert!(caustics_functions.is_strong());
-    app.insert_resource(ShaderLibs(vec![caustics_functions]));
+    app.insert_resource(ShaderLibs(vec![
+        asset_server.load::<Shader>("embedded://bevy_water/caustics_functions.wgsl"),
+        asset_server.load::<Shader>("embedded://bevy_water/caustics_binding.wgsl"),
+    ]));
   }
 }
 

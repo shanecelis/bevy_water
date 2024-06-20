@@ -4,6 +4,7 @@ use bevy::prelude::*;
 pub mod caustics;
 pub mod material;
 pub mod underwater;
+pub mod caustics_parallax;
 use material::*;
 
 pub const WATER_SIZE: u32 = 256;
